@@ -48,6 +48,8 @@ app.listen(PORT, () => {
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
+const { generateCommandInlineKeyboard } = require('./helpers');
+
 bot.command('start', ctx => ctx.reply('Hello, World!\nPlease use /help to see a list of commands.'));
 bot.command('help', require('./commands/help'));
 bot.command('braiins', require('./commands/braiins'));
@@ -57,6 +59,16 @@ bot.command('braiins', require('./commands/braiins'));
 bot.on('message', message => {
     bot.telegram.sendMessage(message.chat.id, "WARNING: I only respond to commands.  Please use /help to see a list of commands.");
 })
+
+bot.action('braiins_action', async ctx => {
+    ctx.deleteMessage();
+    console.log("Braiins button pressed, running braiins_action action")
+    braiinsCommand(ctx);
+});
+
+bot.action('help_action', async ctx => {
+    console.log("help button pressed")
+});
 
 bot.action('user_action', async ctx => {
     console.log("User button pressed")
@@ -73,9 +85,23 @@ bot.action('user_action', async ctx => {
         .then(res => res.json())
         .then(async json => {
             console.log(json);
+
+
+            // Remove the inline keyboard buttons
+            // await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
+            // Remove the 'Choose an option:' text and the inline keyboard buttons
+            // await ctx.editMessageText('✓ Option selected', { reply_markup: { inline_keyboard: [] } });
+            await ctx.editMessageText("Braiins user info", { reply_markup: { inline_keyboard: [] } });
+            // ctx.deleteMessage();
+
+
             // ctx.reply(JSON.stringify(json));
             const prettyData = JSON.stringify(json, null, 2);
             await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
+
+
+            const commandInlineKeyboard = generateCommandInlineKeyboard();
+            await ctx.reply('Available commands:', commandInlineKeyboard);
         })
         .catch(err => {
             console.log(err);

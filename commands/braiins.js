@@ -26,15 +26,12 @@ module.exports = braiinsCommand = async (ctx) => {
         return;
     }
 
-    const Message = 'Query the Braiins API:';
-    ctx.reply(Message);
-
     const inlineKeyboard = Markup.inlineKeyboard([
         Markup.button.callback('user', 'user_action'),
         Markup.button.callback('pool', 'pool_action'),
     ]);
 
-    await ctx.reply('Choose an option:', inlineKeyboard);
+    await ctx.reply('Query the Braiins API:', inlineKeyboard);
 }
 
 

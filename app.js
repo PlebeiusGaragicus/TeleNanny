@@ -2,7 +2,6 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
 
 const express = require('express');
 const app = express();
@@ -48,11 +47,19 @@ app.listen(PORT, () => {
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-const { generateCommandInlineKeyboard } = require('./helpers');
+// const { generateCommandInlineKeyboard } = require('./helpers');
+const { showCommands } = require('./helpers');
+const { braiinsCommand, braiins_user } = require('./commands/braiins');
 
-bot.command('start', ctx => ctx.reply('Hello, World!\nPlease use /help to see a list of commands.'));
+// bot.command('start', ctx => ctx.reply('Hello, World!\nPlease use /help to see a list of commands.'));
+// bot.command('start', async ctx => showCommands(ctx));
+bot.command('start', async ctx => {
+    ctx.deleteMessage();
+    showCommands(ctx)
+});
 bot.command('help', require('./commands/help'));
-bot.command('braiins', require('./commands/braiins'));
+bot.command('braiins', braiinsCommand);
+
 
 // NOTE: THIS NEEDS TO BE LAST!!!
 // This is a catch-all for any messages that are not commands.
@@ -61,56 +68,26 @@ bot.on('message', message => {
 })
 
 bot.action('braiins_action', async ctx => {
-    ctx.deleteMessage();
     console.log("Braiins button pressed, running braiins_action action")
+    ctx.deleteMessage();
     braiinsCommand(ctx);
 });
 
 bot.action('help_action', async ctx => {
     console.log("help button pressed")
+    ctx.deleteMessage();
 });
 
-bot.action('user_action', async ctx => {
-    console.log("User button pressed")
-    // ctx.answerCbQuery('User button pressed');
-
-    const coin = 'btc';
-    const url = `https://pool.braiins.com/accounts/profile/json/${coin}/`
-    await fetch(url, {
-        method: 'GET',
-        headers: {
-            "SlushPool-Auth-Token": `${process.env.BRAIINS_TOKEN}`
-        }
-    })
-        .then(res => res.json())
-        .then(async json => {
-            console.log(json);
-
-
-            // Remove the inline keyboard buttons
-            // await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
-            // Remove the 'Choose an option:' text and the inline keyboard buttons
-            // await ctx.editMessageText('✓ Option selected', { reply_markup: { inline_keyboard: [] } });
-            await ctx.editMessageText("Braiins user info", { reply_markup: { inline_keyboard: [] } });
-            // ctx.deleteMessage();
-
-
-            // ctx.reply(JSON.stringify(json));
-            const prettyData = JSON.stringify(json, null, 2);
-            await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
-
-
-            const commandInlineKeyboard = generateCommandInlineKeyboard();
-            await ctx.reply('Available commands:', commandInlineKeyboard);
-        })
-        .catch(err => {
-            console.log(err);
-            ctx.reply("Error: " + err);
-        });
+bot.action('user_action', braiins_user)
+bot.action('show_commands', async ctx => {
+    showCommands(ctx)
+    ctx.deleteMessage();
 });
+
 
 bot.action('pool_action', async ctx => {
     console.log("Pool button pressed")
+    ctx.deleteMessage();
     // ctx.answerCbQuery('Pool button pressed');
 });
 

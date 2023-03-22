@@ -10,13 +10,27 @@ const getCommands = () => {
     return commandFiles.map(file => file.slice(0, -3));
 };
 
-const generateCommandInlineKeyboard = () => {
+const showCommands = async (ctx) => {
     const commands = getCommands();
     const buttons = commands.map(command => Markup.button.callback(`/${command}`, `${command}_action`));
-    return Markup.inlineKeyboard(buttons, { columns: 1 });
-};
+
+    // const commandInlineKeyboard = Markup.inlineKeyboard(buttons, { columns: 1 });
+    const commandInlineKeyboard = Markup.inlineKeyboard(buttons);
+    await ctx.reply('Available commands:', commandInlineKeyboard);
+}
+
+// const generateCommandInlineKeyboard = () => {
+//     const commands = getCommands();
+//     const buttons = commands.map(command => Markup.button.callback(`/${command}`, `${command}_action`));
+//     return Markup.inlineKeyboard(buttons, { columns: 1 });
+// };
+
+// module.exports = {
+//     getCommands,
+//     generateCommandInlineKeyboard,
+// };
 
 module.exports = {
     getCommands,
-    generateCommandInlineKeyboard,
+    showCommands
 };

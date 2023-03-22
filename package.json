@@ -1,0 +1,24 @@
+{
+  "name": "telenanny",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PlebeiusGaragicus/TeleNanny.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PlebeiusGaragicus/TeleNanny/issues"
+  },
+  "homepage": "https://github.com/PlebeiusGaragicus/TeleNanny#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "fs": "^0.0.1-security",
+    "telegraf": "^4.12.2"
+  }
+}

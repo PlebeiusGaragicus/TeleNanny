@@ -17,15 +17,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.get('/settings', (req, res) => {
     res.json({
         BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+        CHAT_ID: process.env.CHAT_ID,
         BRAIINS_TOKEN: process.env.BRAIINS_TOKEN,
-        SAMPLE_API_KEY: process.env.SAMPLE_API_KEY,
     });
 });
 
 
 app.post('/settings', (req, res) => {
-    const { botToken, braiinsToken, sampleApiKey } = req.body;
-    const envContent = `TELEGRAM_BOT_TOKEN=${botToken}\nBRAIINS_TOKEN=${braiinsToken}\nSAMPLE_API_KEY=${sampleApiKey}\n`;
+    const { botToken, chatId, braiinsToken } = req.body;
+    const envContent = `TELEGRAM_BOT_TOKEN=${botToken}\nCHAT_ID=${chatId}\nBRAIINS_TOKEN=${braiinsToken}\n`;
 
     fs.writeFile(path.join(__dirname, '.env'), envContent, (err) => {
         if (err) {
@@ -47,49 +47,80 @@ app.listen(PORT, () => {
 const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-// const { generateCommandInlineKeyboard } = require('./helpers');
-const { showCommands } = require('./helpers');
-const { braiinsCommand, braiins_user } = require('./commands/braiins');
 
-// bot.command('start', ctx => ctx.reply('Hello, World!\nPlease use /help to see a list of commands.'));
-// bot.command('start', async ctx => showCommands(ctx));
+//// /START COMMAND ////
+const { ShowTopLevelCommands } = require('./helpers');
 bot.command('start', async ctx => {
+    console.log("start command called - CHAT ID: ", ctx.chat.id, " - FROM: ", ctx.from.username, "User ID: ", ctx.from.id);
+    // ctx.reply(`Your chat ID is: ${ctx.chat.id}`);
     ctx.deleteMessage();
-    showCommands(ctx)
+
+    // const ik = topLevelCommands()
+    // await ctx.reply('Available commands:', ik );
+
+    ShowTopLevelCommands(ctx)
 });
-bot.command('help', require('./commands/help'));
-bot.command('braiins', braiinsCommand);
+
 
 
 // NOTE: THIS NEEDS TO BE LAST!!!
 // This is a catch-all for any messages that are not commands.
-bot.on('message', message => {
-    bot.telegram.sendMessage(message.chat.id, "WARNING: I only respond to commands.  Please use /help to see a list of commands.");
-})
+// bot.on('message', message => {
+//     bot.telegram.sendMessage(message.chat.id, "WARNING: I only respond to commands.  Please use /help to see a list of commands.");
+// })
+// TODO: turn this into a modal kind of thing... where the user can enter messages (that will be deleted).. but the context is whatever inline keyboard is currently showing.  Easy to set a global where the bot keeps track of which "mode" it is in.
 
-bot.action('braiins_action', async ctx => {
-    console.log("Braiins button pressed, running braiins_action action")
-    ctx.deleteMessage();
-    braiinsCommand(ctx);
-});
 
-bot.action('help_action', async ctx => {
-    console.log("help button pressed")
-    ctx.deleteMessage();
-});
 
-bot.action('user_action', braiins_user)
+// THIS IS THE 'BACK BUTTON'
 bot.action('show_commands', async ctx => {
-    showCommands(ctx)
     ctx.deleteMessage();
+    ShowTopLevelCommands(ctx)
 });
 
 
-bot.action('pool_action', async ctx => {
-    console.log("Pool button pressed")
-    ctx.deleteMessage();
-    // ctx.answerCbQuery('Pool button pressed');
-});
+//// OLD WAY OF TEACHING THE BOT NEW COMMANDS ////
+// const { braiinsCommand, braiins_user, braiins_workers } = require('./commands/braiins');
+// const { mempoolCommand, mempool_height } = require('./commands/mempool');
 
+
+//// NEW WAY OF TEACHING THE BOT NEW COMMANDS ////
+//// THIS WAY KEEPS APP.JS TIDY ////
+require('./commands/braiins_API').activate(bot);
+require('./commands/bitcoin').activate(bot);
+
+
+// START THE BOT AND SAY HELLO
 bot.launch();
 console.log("Bot started");
+
+
+//// TODO: I'm not sure this is needed...
+//// Send a message to the chat id that the bot is running on
+//// ... it ensures the bot will only chat with the 
+// const targetChatId = process.env.CHAT_ID || undefined
+// if (targetChatId === undefined) {
+//     console.error("CHAT ID is not setup in .env\nuse \/get_chat_id then use the web portal to save it.")
+//     // process.exit(1)
+// }
+// else
+
+
+
+//// 'MIDDLEWARE' THAT RESTRICTS WHICH USER THE BOT WILL RESPOND TO ////
+// TODO: I NEED TO TEST THIS!!!
+const ALLOWED_USER_ID = process.env.CHAT_ID || undefined
+if (ALLOWED_USER_ID === undefined) {
+    console.log(">>> WARNING!!!\n>>>\tCHAT_ID not set.  Please set this in the .env file.\n>>>\tThis is the Telegram user ID that will be allowed to use this bot.\n>>>\tYou can find your user ID by sending a message to @userinfobot\n>>>\n");
+} else {
+    bot.use((ctx, next) => {
+        if (ctx.from.id.toString() === ALLOWED_USER_ID) {
+            return next();
+        } else {
+            console.log(`Unauthorized access attempt by user ID: ${ctx.from.id}`);
+            // ctx.reply(`Sorry, you are not authorized to use this bot.`);
+        }
+    });
+    //// SAY HELLO
+    bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
+}

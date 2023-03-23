@@ -2,8 +2,7 @@ const fetch = require('node-fetch');
 
 const { Markup } = require('telegraf');
 
-const { ShowTopLevelCommands } = require('../helpers');
-
+// REFERENCE: https://help.braiins.com/en/support/solutions/articles/77000433512-api-configuration-guide#Worker-API
 
 async function braiins_APICommand(ctx) {
     // console.log("Braiins command called")

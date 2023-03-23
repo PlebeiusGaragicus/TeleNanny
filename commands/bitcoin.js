@@ -2,8 +2,7 @@ const fetch = require('node-fetch');
 
 const { Markup } = require('telegraf');
 
-const { ShowTopLevelCommands } = require('../helpers');
-
+// REFERENCE: https://mempool.space/docs/api/rest
 
 
 async function bitcoinCommand(ctx) {

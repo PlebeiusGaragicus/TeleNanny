@@ -1,11 +1,13 @@
-const fetch = require('node-fetch');
+// const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-const { Markup } = require('telegraf');
+// const { Markup } = require('telegraf');
+import { Markup } from 'telegraf';
 
 // REFERENCE: https://mempool.space/docs/api/rest
 
 
-async function bitcoinCommand(ctx) {
+export async function bitcoinCommand(ctx) {
     const inlineKeyboard = Markup.inlineKeyboard([
         Markup.button.callback('<-', 'show_commands'),
         Markup.button.callback('price', 'price'),
@@ -45,7 +47,7 @@ async function price(ctx) {
         .then(res => res.json())
         .then(async json => {
             await ctx.editMessageText("Bitcoin spot price (coinbase):", { reply_markup: { inline_keyboard: [] } });
-            amnt = json.data.amount;
+            const amnt = json.data.amount;
             await ctx.reply(`<pre>$${amnt}</pre>`, { parse_mode: 'HTML' });
             // ShowTopLevelCommands(ctx);
             bitcoinCommand(ctx);
@@ -57,7 +59,7 @@ async function price(ctx) {
 }
 
 
-function activate(bot) {
+export function teachBotBitcoinCommands(bot) {
     // TODO: this needs to be thought out more... _action is not a good name
     bot.action('bitcoin_action', async ctx => {
         ctx.deleteMessage();
@@ -69,7 +71,7 @@ function activate(bot) {
 }
 
 
-module.exports = {
-    bitcoinCommand,
-    activate
-}
+// module.exports = {
+//     bitcoinCommand,
+//     activate
+// }

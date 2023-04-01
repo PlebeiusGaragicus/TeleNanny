@@ -142,7 +142,13 @@ if (ALLOWED_USER_ID === undefined) {
     bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
 
     process.on('exit', () => {
-        console.log("bye");
+        console.log("process exiting");
         bot.telegram.sendMessage(ALLOWED_USER_ID, `Goodbye,\nI'm going to sleep now.`);
     });
+
+    process.on('SIGINT', () => {
+        console.log("SIGINT");
+        bot.telegram.sendMessage(ALLOWED_USER_ID, `I'M DYING!! SIGING!!!`);
+        // process.exit();
+    }
 }

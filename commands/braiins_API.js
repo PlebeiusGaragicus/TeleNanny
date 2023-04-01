@@ -1,11 +1,12 @@
-const fetch = require('node-fetch');
+// const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-const { Markup } = require('telegraf');
+// const { Markup } = require('telegraf');
+import { Markup } from 'telegraf';
 
-const { ShowTopLevelCommands } = require('../helpers');
+// REFERENCE: https://help.braiins.com/en/support/solutions/articles/77000433512-api-configuration-guide#Worker-API
 
-
-async function braiins_APICommand(ctx) {
+export async function braiins_APICommand(ctx) {
     // console.log("Braiins command called")
     // ctx.answerCbQuery('Available Braiins API Commands:');
 
@@ -90,7 +91,7 @@ async function braiins_workers(ctx) {
         });
 }
 
-function activate(bot) {
+export function teachBotBraiinsCommands(bot) {
     // bot.command('braiins', braiinsCommand);
     // bot.action('braiins_action', braiinsCommand);
 
@@ -109,7 +110,7 @@ function activate(bot) {
 //     braiins_user,
 //     braiins_workers
 // }
-module.exports = {
-    braiins_APICommand,
-    activate
-}
+// module.exports = {
+//     braiins_APICommand,
+//     activate
+// }

@@ -1,14 +1,23 @@
-require('dotenv').config();
+import express from 'express';
+import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
+import { Telegraf } from 'telegraf';
 
-const fs = require('fs');
-const path = require('path');
+dotenv.config();
 
-const express = require('express');
+
+// const fs = require('fs');
+// const path = require('path');
+
+// const express = require('express');
+
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(process.cwd(), 'public')));
 // app.get('/', (req, res) => {
 //     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 // });
@@ -44,12 +53,13 @@ app.listen(PORT, () => {
 
 
 //// INIT THE BOT ////
-const { Telegraf } = require('telegraf');
+// const { Telegraf } = require('telegraf');
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 
 //// /START COMMAND ////
-const { ShowTopLevelCommands } = require('./helpers');
+// const { ShowTopLevelCommands } = require('./helpers');
+import { ShowTopLevelCommands } from './helpers.js';
 bot.command('start', async ctx => {
     console.log("start command called - CHAT ID: ", ctx.chat.id, " - FROM: ", ctx.from.username, "User ID: ", ctx.from.id);
     // ctx.reply(`Your chat ID is: ${ctx.chat.id}`);
@@ -86,8 +96,15 @@ bot.action('show_commands', async ctx => {
 
 //// NEW WAY OF TEACHING THE BOT NEW COMMANDS ////
 //// THIS WAY KEEPS APP.JS TIDY ////
-require('./commands/braiins_API').activate(bot);
-require('./commands/bitcoin').activate(bot);
+// require('./commands/braiins_API').activate(bot);
+import { teachBotBitcoinCommands } from './commands/bitcoin.js';
+
+teachBotBitcoinCommands(bot);
+
+// require('./commands/bitcoin').activate(bot);
+import { teachBotBraiinsCommands } from './commands/braiins_API.js';
+
+teachBotBraiinsCommands(bot);
 
 
 // START THE BOT AND SAY HELLO
@@ -123,4 +140,9 @@ if (ALLOWED_USER_ID === undefined) {
     });
     //// SAY HELLO
     bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
+
+    process.on('exit', () => {
+        console.log("bye");
+        bot.telegram.sendMessage(ALLOWED_USER_ID, `Goodbye,\nI'm going to sleep now.`);
+    });
 }

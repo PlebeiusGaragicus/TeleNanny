@@ -1,11 +1,15 @@
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
+import path from 'path';
+import fs from 'fs';
 
-const { Markup } = require('telegraf');
+// const { Markup } = require('telegraf');
+import { Markup } from 'telegraf';
 
 
-const ShowTopLevelCommands = async (ctx) => {
-    const commandFiles = fs.readdirSync(path.join(__dirname, './commands')).filter(file => file.endsWith('.js'));
+
+export const ShowTopLevelCommands = async (ctx) => {
+    const commandFiles = fs.readdirSync(path.join(process.cwd(), './commands')).filter(file => file.endsWith('.js'));
     const commands = commandFiles.map(file => file.slice(0, -3));
     // commandsNoUnderscore = commands.map(command => command.replace(/_/g, ' '));
     const buttons = commands.map(command => Markup.button.callback(`${command}`, `${command}_action`));
@@ -17,6 +21,6 @@ const ShowTopLevelCommands = async (ctx) => {
 }
 
 
-module.exports = {
-    ShowTopLevelCommands
-};
+// module.exports = {
+//     ShowTopLevelCommands
+// };

@@ -140,4 +140,9 @@ if (ALLOWED_USER_ID === undefined) {
     });
     //// SAY HELLO
     bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
+
+    process.on('exit', () => {
+        console.log("bye");
+        bot.telegram.sendMessage(ALLOWED_USER_ID, `Goodbye,\nI'm going to sleep now.`);
+    });
 }

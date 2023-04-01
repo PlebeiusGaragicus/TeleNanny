@@ -149,6 +149,6 @@ if (ALLOWED_USER_ID === undefined) {
     process.on('SIGINT', () => {
         console.log("SIGINT");
         bot.telegram.sendMessage(ALLOWED_USER_ID, `I'M DYING!! SIGING!!!`);
-        // process.exit();
+        process.exit();
     });
 }

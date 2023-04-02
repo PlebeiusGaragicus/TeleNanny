@@ -83,17 +83,6 @@ async function miner_temp(ctx) {
         client.write(data);
     });
 
-    // client.on('data', async (response) => {
-    //     const cleanedResponse = response.toString().trim().replace(/\0/g, '');
-    //     const jsonResponse = JSON.parse(cleanedResponse);
-    //     console.log(jsonResponse);
-
-    //     await ctx.editMessageText("temperature:", { reply_markup: { inline_keyboard: [] } });
-    //     await ctx.reply(`<pre>${jsonResponse}</pre>`, { parse_mode: 'HTML' });
-    //     minerCommand(ctx);
-
-    //     client.destroy(); // Close the connection after receiving the response
-    // });
     client.on('data', async (response) => {
         const cleanedResponse = response.toString().trim().replace(/\0/g, '');
         const jsonResponse = JSON.parse(cleanedResponse);
@@ -108,7 +97,6 @@ async function miner_temp(ctx) {
             }
         });
 
-
         // Convert the JSON object to a formatted string
         // const formattedJsonResponse = JSON.stringify(jsonResponse, null, 2);
         await ctx.reply(`<pre>${maxTemp} Celcius</pre>`, { parse_mode: 'HTML' });
@@ -117,8 +105,9 @@ async function miner_temp(ctx) {
         client.destroy(); // Close the connection after receiving the response
     });
 
-    client.on('error', (error) => {
+    client.on('error', async (error) => {
         console.error('Error:', error);
+        await ctx.editMessageText("Error: ${error}", { reply_markup: { inline_keyboard: [] } });
     });
 }
 

@@ -106,6 +106,9 @@ import { teachBotBraiinsCommands } from './commands/braiins_API.js';
 
 teachBotBraiinsCommands(bot);
 
+import { teachBotMinerCommands } from './commands/miner.js';
+
+teachBotMinerCommands(bot);
 
 // START THE BOT AND SAY HELLO
 bot.launch();

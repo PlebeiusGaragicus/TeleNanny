@@ -143,7 +143,7 @@ async function price(ctx) {
                 ]
             ];
             // await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
-            await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: []] } });
+            await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
             await ctx.reply(`<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
         })
         .catch(err => {

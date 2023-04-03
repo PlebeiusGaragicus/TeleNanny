@@ -1,12 +1,10 @@
-// const fetch = require('node-fetch');
 import fetch from 'node-fetch';
-
-// const { Markup } = require('telegraf');
 import { Markup } from 'telegraf';
+
 
 // REFERENCE: https://help.braiins.com/en/support/solutions/articles/77000433512-api-configuration-guide#Worker-API
 
-export async function braiins_APICommand(ctx) {
+async function braiins_TopLevelMenu(ctx) {
     // console.log("Braiins command called")
     // ctx.answerCbQuery('Available Braiins API Commands:');
 
@@ -53,7 +51,7 @@ async function braiins_user(ctx) {
             await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
 
             // ShowTopLevelCommands(ctx);
-            braiins_APICommand(ctx);
+            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
@@ -83,7 +81,7 @@ async function braiins_workers(ctx) {
             await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
 
             // ShowTopLevelCommands(ctx);
-            braiins_APICommand(ctx);
+            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
@@ -91,26 +89,15 @@ async function braiins_workers(ctx) {
         });
 }
 
-export function teachBotBraiinsCommands(bot) {
+export function teachBraiins(bot) {
     // bot.command('braiins', braiinsCommand);
     // bot.action('braiins_action', braiinsCommand);
 
-    bot.action('braiins_API_action', async ctx => {
+    bot.action('braiins_TopLevelMenu', async ctx => {
         ctx.deleteMessage();
-        braiins_APICommand(ctx);
+        braiins_TopLevelMenu(ctx);
     });
 
     bot.action('user_action', braiins_user);
     bot.action('workers_action', braiins_workers);
 }
-
-
-// module.exports = {
-//     braiinsCommand,
-//     braiins_user,
-//     braiins_workers
-// }
-// module.exports = {
-//     braiins_APICommand,
-//     activate
-// }

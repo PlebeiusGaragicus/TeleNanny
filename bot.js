@@ -89,9 +89,18 @@ export async function setupBot(bot) {
         //// SAY HELLO
         bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
 
+        let sigintHandled = false;
+
         process.on('SIGINT', () => {
             console.log("SIGINT");
-            bot.telegram.sendMessage(ALLOWED_USER_ID, `(X.X) I'M DYING - SIGINT!!!`)
+
+            if (sigintHandled) {
+                return; // Exit early if SIGINT has already been handled
+            } else {
+                sigintHandled = true;
+            }
+
+            bot.telegram.sendMessage(ALLOWED_USER_ID, `⚠️ *SIGINT: ⚰️☠️🪦 I'M DYING\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
                 .then(() => {
                     console.log("process exiting...");
                     process.exit(0);

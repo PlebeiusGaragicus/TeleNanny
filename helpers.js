@@ -21,5 +21,8 @@ export const ShowTopLevelCommands = async (ctx) => {
     // const commandInlineKeyboard = Markup.inlineKeyboard(buttons, { columns: 1 });
     const commandInlineKeyboard = Markup.inlineKeyboard(buttons);
 
+    // we have to reply becuase the context is a message from the user... and apparently we can't edit that message.
     await ctx.reply('Top level commands:', commandInlineKeyboard);
+    // await ctx.editMessageReplyMarkup(commandInlineKeyboard);
+    // await ctx.editMessageText("available commands:", commandInlineKeyboard);
 }

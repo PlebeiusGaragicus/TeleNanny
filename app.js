@@ -51,11 +51,30 @@ app.listen(PORT, () => {
 
 
 //// INIT THE BOT ////
+console.log("Starting bot...");
 export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+
+
+// async function clearPendingMessages() {
+//     try {
+//         const updates = await bot.telegram.getUpdates();
+
+//         if (updates.length > 0) {
+//             const highestUpdateId = updates[updates.length - 1].update_id;
+//             await bot.telegram.getUpdates({ offset: highestUpdateId + 1, allowed_updates: [] });
+//             console.log('Cleared pending messages');
+//         } else {
+//             console.log('No pending messages');
+//         }
+//     } catch (error) {
+//         console.error('Error clearing pending messages:', error);
+//     }
+// }
 
 setupBot(bot);
 
+// clearPendingMessages().then(() => {
+//     bot.launch();
+// });
 
-// START THE BOT AND SAY HELLO
 bot.launch();
-console.log("Bot started");

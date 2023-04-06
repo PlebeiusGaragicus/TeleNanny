@@ -11,6 +11,7 @@ import { teachMiner } from './commands/miner.js';
 
 
 
+let justLaunched = true;
 
 
 export async function setupBot(bot) {
@@ -24,6 +25,16 @@ export async function setupBot(bot) {
 
 
     bot.command('start', async ctx => {
+        // ctx.deleteMessage();
+
+        if (!justLaunched) {
+            ctx.deleteMessage();
+            return;
+        }
+
+        if (justLaunched)
+            justLaunched = false;
+
         console.log("start command called - CHAT ID: ", ctx.chat.id, " - FROM: ", ctx.from.username, "User ID: ", ctx.from.id);
         ctx.deleteMessage();
 
@@ -100,7 +111,8 @@ export async function setupBot(bot) {
                 sigintHandled = true;
             }
 
-            bot.telegram.sendMessage(ALLOWED_USER_ID, `⚠️ *SIGINT: ⚰️☠️🪦 I'M DYING\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
+            // ⚰️☠️🪦
+            bot.telegram.sendMessage(ALLOWED_USER_ID, `⚠️ *BOT SHUTDOWN\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
                 .then(() => {
                     console.log("process exiting...");
                     process.exit(0);

@@ -54,9 +54,10 @@ async function block_height(ctx) {
 
 // REFERENCE: https://mempool.space/docs/api/rest
 async function price(ctx) {
-    await ctx.answerCbQuery('You selected price');
+    // await ctx.answerCbQuery('You selected price');
 
-    const price = await getPrice();
+    // const price = await getPrice();
+    const price = Intl.NumberFormat('en-US').format(await getPrice());
 
     if (price == null) {
         console.log("Error: can't get price")
@@ -70,7 +71,11 @@ async function price(ctx) {
             Markup.button.callback('setup notifications', 'setNotify'),
         ]
     ];
-    await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${price}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
+
+    const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
+    const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
+
+    await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
     // await ctx.reply(`Bitcoin spot price (coinbase):\n<pre>$${price}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
     // await ctx.reply(`<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
@@ -135,12 +140,13 @@ async function adjustCeiling(ctx) {
 
     if (ceiling == 0) {
         console.log("Price ceiling cancelled");
-        // ctx.reply("Price ceiling cancelled");
-        ctx.editMessageText("Price ceiling cancelled");
+        ctx.reply("Price ceiling cancelled");
+        // ctx.editMessageText("Price ceiling cancelled");
         priceCeiling = null;
         clearInterval(priceCeilingIntervalID);
 
-        bitcoin_TopLevelMenu(ctx);
+        // bitcoin_TopLevelMenu(ctx);
+        price(ctx);
         return;
     }
 
@@ -162,8 +168,12 @@ async function adjustCeiling(ctx) {
     priceCeilingIntervalID = setInterval(checkPriceCeiling, priceCheckInterval);
 
     bitcoin_TopLevelMenu(ctx);
+
+    // price(a);
     // setNotify(ctx); // THIS DOESN'T WORK!  It will cause an error
 }
+
+
 
 async function adjustFloor(text) {
     console.log("adjust price floor to: ", text)
@@ -178,16 +188,32 @@ async function checkPriceCeiling() {
 
     if (price == null) {
         console.log("checkPriceCeiling() Error: can't get price")
-        ctx.reply("checkPriceCeiling() Error: can't get price");
+        // WARNING: untested path
+        bot.telegram.sendMessage(process.env.CHAT_ID, "checkPriceCeiling() Error: can't get price");
         return;
     }
 
     if (price > priceCeiling) {
         console.log("Price ceiling hit: ", price);
-        bot.telegram.sendMessage(process.env.CHAT_ID, "⚡️📈  <b>Price ceiling hit: " + price + "</b> 📈⚡️", { parse_mode: 'HTML' });
-        clearInterval(priceCeilingIntervalID);
+
+        // const acknowledgeKeyboard = Markup.inlineKeyboard([
+        //     [Markup.button.callback('Acknowledge', 'acknowledge_ceiling_alert')],
+        // ]);
+        const acknowledgeKeyboard = [
+            [Markup.button.callback('Acknowledge', 'acknowledge_ceiling_alert')],
+        ];
+        // await bot.telegram.sendMessage(process.env.CHAT_ID, "⚡️📈  <b>Price ceiling hit: " + price + "</b> 📈⚡️", { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } });
+        await bot.telegram.sendMessage(
+            process.env.CHAT_ID,
+            `⚡️📈  <b>Price ceiling hit: ${price}</b> 📈⚡️`,
+            { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
+        );
+        // priceCeiling = null;
+        // clearInterval(priceCeilingIntervalID);
     }
 }
+
+
 
 async function checkPriceFloor() {
     // 📉
@@ -225,33 +251,6 @@ async function getBlockHeight() {
 
 
 
-// async function price(ctx) {
-//     const url = 'https://api.coinbase.com/v2/prices/spot?currency=USD'
-//     await fetch(url, {
-//         method: 'GET',
-//     })
-//         .then(res => res.json())
-//         .then(async json => {
-//             // await ctx.editMessageText("Bitcoin spot price (coinbase):", { reply_markup: { inline_keyboard: [] } });
-//             const amnt = json.data.amount;
-
-//             // bitcoin_TopLevelMenu(ctx);
-//             const inlineKeyboard = [
-//                 [
-//                     Markup.button.callback('<-', 'bitcoin_TopLevelMenu'),
-//                     Markup.button.callback('setup notifications', 'setNotify'),
-//                 ]
-//             ];
-//             // await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
-//             await ctx.editMessageText(`Bitcoin spot price (coinbase):\n<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
-//             // await ctx.reply(`<pre>$${amnt}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
-//         })
-//         .catch(err => {
-//             console.log(err);
-//             ctx.reply("Error: " + err);
-//         });
-// }
-
 
 
 
@@ -262,10 +261,6 @@ export function teachBitcoin(bot) {
         const callbackData = ctx.callbackQuery.data;
 
         console.log("running callback query to remove text and keyboard: ", callbackData)
-
-        // await ctx.editMessageText(`${callbackData}`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
-        // just remove the keyboard
-        // await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
 
 
         switch (callbackData) {
@@ -279,7 +274,7 @@ export function teachBitcoin(bot) {
 
                 await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
                 await next();
-            // await ctx.answerCbQuery();
+                await ctx.answerCbQuery('selection made...');
         }
     });
 
@@ -294,6 +289,13 @@ export function teachBitcoin(bot) {
     bot.action('setNotify', setNotify);
     bot.action('setCeiling', setCeiling);
     bot.action('setFloor', setFloor);
+
+    bot.action('acknowledge_ceiling_alert', async (ctx) => {
+        // await ctx.answerCbQuery(); // Answer the callback query
+        priceCeiling = null;
+        clearInterval(priceCeilingIntervalID);
+        await ctx.reply('Price ceiling alerts stopped.');
+    });
 
 
 }

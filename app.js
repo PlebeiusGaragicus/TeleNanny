@@ -49,7 +49,7 @@ app.listen(PORT, () => {
 
 
 //// INIT THE BOT ////
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 
 //// /START COMMAND ////
@@ -66,14 +66,15 @@ import { mode_callback } from './helpers.js';
 // NOTE: THIS NEEDS TO BE LAST!!!
 // TODO: turn this into a modal kind of thing... where the user can enter messages (that will be deleted).. but the context is whatever inline keyboard is currently showing.  Easy to set a global where the bot keeps track of which "mode" it is in.
 // This is a catch-all for any messages that are not commands.
-bot.on('message', message => {
-
+bot.on('message', ctx => {
     if (mode_callback == null) {
-        bot.telegram.sendMessage(message.chat.id, "WARNING: I only respond to commands.  Please use /help to see a list of commands.");
+        // bot.telegram.sendMessage(ctx.message.chat.id, "WARNING: I only respond to commands.  Please use /help to see a list of commands.");
+        ctx.reply("WARNING: I only respond to commands.  You can always /start again if you need.");
         return;
-    } else {
-        mode_callback(message);
     }
+
+    mode_callback(ctx);
+
 })
 
 
@@ -104,6 +105,19 @@ teachMiner(bot);
 // START THE BOT AND SAY HELLO
 bot.launch();
 console.log("Bot started");
+
+async function getBotDetails() {
+    try {
+        const botInfo = await bot.telegram.getMe();
+        console.log('Bot Details:', botInfo);
+    } catch (error) {
+        console.error('Error getting bot details:', error);
+    }
+}
+
+getBotDetails();
+
+
 
 
 //// TODO: I'm not sure this is needed...

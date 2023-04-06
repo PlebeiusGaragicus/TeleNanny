@@ -16,6 +16,7 @@ export async function miner_TopLevelMenu(ctx) {
 
 
 async function miner_temp(ctx) {
+    // TODO: we need to search for miners on the local network and return a list.. then just get the temps of all of them?
     const ip = '192.168.5.2';
     const port = 4028;
     const command = 'temps';
@@ -53,7 +54,7 @@ async function miner_temp(ctx) {
 
     client.on('error', async (error) => {
         console.error('Error:', error);
-        await ctx.editMessageText("Error: ${error}", { reply_markup: { inline_keyboard: [] } });
+        await ctx.editMessageText(`Error: ${error}`, { reply_markup: { inline_keyboard: [] } });
     });
 }
 

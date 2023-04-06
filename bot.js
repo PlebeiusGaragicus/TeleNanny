@@ -46,6 +46,25 @@ export async function setupBot(bot) {
         ShowTopLevelCommands(ctx)
     });
 
+    bot.on('callback_query', async (ctx, next) => {
+
+        const callbackData = ctx.callbackQuery.data;
+        console.log("running callback query to remove text and keyboard: ", callbackData)
+
+        switch (callbackData) {
+            case 'show_commands':
+                await next();
+                break;
+            default:
+                console.log("callback: ", callbackData)
+
+                await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
+                await next();
+                await ctx.answerCbQuery('selection made...');
+        }
+    });
+
+
 
     // TEACH THE BOT EACH `SKILL`
     teachBitcoin(bot);

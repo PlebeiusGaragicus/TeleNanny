@@ -68,7 +68,9 @@ async function price(ctx) {
     const inlineKeyboard = [
         [
             Markup.button.callback('<-', 'bitcoin_TopLevelMenu'),
-            Markup.button.callback('setup notifications', 'setNotify'),
+            // Markup.button.callback('setup notifications', 'setNotify'),
+            Markup.button.callback('price ceiling', 'setCeiling'),
+            Markup.button.callback('price floor', 'setFloor')
         ]
     ];
 
@@ -83,22 +85,22 @@ async function price(ctx) {
 
 
 
-async function setNotify(ctx) {
-    console.log("Set Notify button pressed")
+// async function setNotify(ctx) {
+//     console.log("Set Notify button pressed")
 
-    // REMOVE OLD INLINE KEYBOARD
-    // await ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } });
-    // await ctx.editMessageText("Bitcoin spot price (coinbase):", { reply_markup: { inline_keyboard: [] } });
+//     // REMOVE OLD INLINE KEYBOARD
+//     // await ctx.editMessageReplyMarkup({ reply_markup: { inline_keyboard: [] } });
+//     // await ctx.editMessageText("Bitcoin spot price (coinbase):", { reply_markup: { inline_keyboard: [] } });
 
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'price'),
-        Markup.button.callback('price ceiling', 'setCeiling'),
-        Markup.button.callback('price floor', 'setFloor'),
-    ]);
-    //TODO: GET CURRENT NOTIFICATION SETTINGS AND DISPLAY THEM
-    // await ctx.reply('set price notifications:', inlineKeyboard);
-    await ctx.editMessageText('set price notifications:', inlineKeyboard);
-}
+//     const inlineKeyboard = Markup.inlineKeyboard([
+//         Markup.button.callback('<-', 'price'),
+//         Markup.button.callback('price ceiling', 'setCeiling'),
+//         Markup.button.callback('price floor', 'setFloor'),
+//     ]);
+//     //TODO: GET CURRENT NOTIFICATION SETTINGS AND DISPLAY THEM
+//     // await ctx.reply('set price notifications:', inlineKeyboard);
+//     await ctx.editMessageText('set price notifications:', inlineKeyboard);
+// }
 
 
 async function setCeiling(ctx) {
@@ -182,13 +184,14 @@ async function adjustFloor(text) {
 }
 
 
+// This is the ID of the last alert message
+let lastAlertMessageId = null;
 
 async function checkPriceCeiling() {
     const price = await getPrice();
 
     if (price == null) {
-        console.log("checkPriceCeiling() Error: can't get price")
-        // WARNING: untested path
+        console.log("checkPriceCeiling() Error: can't get price");
         bot.telegram.sendMessage(process.env.CHAT_ID, "checkPriceCeiling() Error: can't get price");
         return;
     }
@@ -196,20 +199,27 @@ async function checkPriceCeiling() {
     if (price > priceCeiling) {
         console.log("Price ceiling hit: ", price);
 
-        // const acknowledgeKeyboard = Markup.inlineKeyboard([
-        //     [Markup.button.callback('Acknowledge', 'acknowledge_ceiling_alert')],
-        // ]);
         const acknowledgeKeyboard = [
             [Markup.button.callback('Acknowledge', 'acknowledge_ceiling_alert')],
         ];
-        // await bot.telegram.sendMessage(process.env.CHAT_ID, "⚡️📈  <b>Price ceiling hit: " + price + "</b> 📈⚡️", { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } });
-        await bot.telegram.sendMessage(
+
+        // Delete the previous alert message if it exists
+        if (lastAlertMessageId) {
+            try {
+                await bot.telegram.deleteMessage(process.env.CHAT_ID, lastAlertMessageId);
+            } catch (error) {
+                console.error("Error deleting previous alert message:", error);
+            }
+        }
+
+        // Send the new alert message and store its ID
+        const sentMessage = await bot.telegram.sendMessage(
             process.env.CHAT_ID,
             `⚡️📈  <b>Price ceiling hit: ${price}</b> 📈⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
-        // priceCeiling = null;
-        // clearInterval(priceCeilingIntervalID);
+
+        lastAlertMessageId = sentMessage.message_id;
     }
 }
 
@@ -256,28 +266,6 @@ async function getBlockHeight() {
 
 
 export function teachBitcoin(bot) {
-    bot.on('callback_query', async (ctx, next) => {
-
-        const callbackData = ctx.callbackQuery.data;
-
-        console.log("running callback query to remove text and keyboard: ", callbackData)
-
-
-        switch (callbackData) {
-            case 'show_commands':
-                // Handle show_commands action
-                await next();
-                break;
-            default:
-                // Unknown action, just answer the query
-                console.log("callback: ", callbackData)
-
-                await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
-                await next();
-                await ctx.answerCbQuery('selection made...');
-        }
-    });
-
     bot.action('bitcoin_TopLevelMenu', async ctx => {
         ctx.deleteMessage();
         bitcoin_TopLevelMenu(ctx);
@@ -286,7 +274,7 @@ export function teachBitcoin(bot) {
     bot.action('block_height', block_height);
     bot.action('price', price);
 
-    bot.action('setNotify', setNotify);
+    // bot.action('setNotify', setNotify);
     bot.action('setCeiling', setCeiling);
     bot.action('setFloor', setFloor);
 

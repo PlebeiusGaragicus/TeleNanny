@@ -1,13 +1,9 @@
 import { ShowTopLevelCommands, mode_callback } from './helpers.js';
 
 
-//// OLD WAY OF TEACHING THE BOT NEW COMMANDS ////
-// require('./commands/braiins_API').activate(bot);
-// require('./commands/bitcoin').activate(bot);
 import { teachBitcoin } from './commands/bitcoin.js';
 import { teachBraiins } from './commands/braiins.js';
 import { teachMiner } from './commands/miner.js';
-
 
 
 
@@ -25,7 +21,6 @@ export async function setupBot(bot) {
 
 
     bot.command('start', async ctx => {
-        // ctx.deleteMessage();
 
         if (!justLaunched) {
             ctx.deleteMessage();
@@ -51,16 +46,25 @@ export async function setupBot(bot) {
         const callbackData = ctx.callbackQuery.data;
         console.log("running callback query to remove text and keyboard: ", callbackData)
 
-        switch (callbackData) {
-            case 'show_commands':
-                await next();
-                break;
-            default:
-                console.log("callback: ", callbackData)
+        try {
 
-                await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
-                await next();
-                await ctx.answerCbQuery('selection made...');
+            switch (callbackData) {
+                // case 'show_commands':
+                //     await next();
+                //     await ctx.answerCbQuery('main menu');
+                //     break;
+                default:
+                    console.log("callback: ", callbackData)
+
+                    await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
+                    await next();
+                    await ctx.answerCbQuery('topic/skill button pressed');
+            }
+        } catch (error) {
+            // I think this happens when a user clicks an inline keyboard but the bot is not running.
+            /// ... when the bot starts up it processes all the messages in the queue... so it will process the callback query... 
+            //// ...  'Bad Request: query is too old and response timeout expired or query ID is invalid'
+            console.error("Error in callback_query: ", error);
         }
     });
 

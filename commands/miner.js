@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import net from 'net';
 import { Markup } from 'telegraf';
 

@@ -7,7 +7,7 @@ import { teachMiner } from './commands/miner.js';
 import { teachChatGPT } from './commands/chatGPT.js';
 
 
-
+// TODO: unsure of this.  I don't want multiple menus up and running.  So, I don't want the user to do /start again and again.
 let justLaunched = true;
 
 
@@ -36,15 +36,16 @@ export async function setupBot(bot) {
         ShowTopLevelCommands(ctx)
     });
 
+    bot.command('restart', async ctx => {
+        console.log("not yet implemented");
+        ctx.reply("not yet implemented");
+    });
+
 
 
     bot.on('callback_query', async (ctx, next) => {
 
-        const callbackData = ctx.callbackQuery.data;
-        console.log("running callback query to remove text and keyboard: ", callbackData)
-
-        console.log("callback: ", callbackData)
-        console.log("deleting the only time I can find.")
+        // const callbackData = ctx.callbackQuery.data; //NOTE: this is the callback function's name
 
         ctx.deleteMessage().catch((error) => {
             console.error("CAUGHT: Error deleting message:", error);

@@ -4,6 +4,7 @@ import { ShowTopLevelCommands, mode_callback } from './helpers.js';
 import { teachBitcoin } from './commands/bitcoin.js';
 import { teachBraiins } from './commands/braiins.js';
 import { teachMiner } from './commands/miner.js';
+import { teachChatGPT } from './commands/chatGPT.js';
 
 
 
@@ -23,7 +24,7 @@ export async function setupBot(bot) {
     bot.command('start', async ctx => {
 
         if (!justLaunched) {
-            ctx.deleteMessage();
+            // ctx.deleteMessage();
             return;
         }
 
@@ -31,41 +32,32 @@ export async function setupBot(bot) {
             justLaunched = false;
 
         console.log("start command called - CHAT ID: ", ctx.chat.id, " - FROM: ", ctx.from.username, "User ID: ", ctx.from.id);
-        ctx.deleteMessage();
+        // ctx.deleteMessage();
 
         ShowTopLevelCommands(ctx)
     });
 
-    bot.action('show_commands', async ctx => {
-        ctx.deleteMessage();
-        ShowTopLevelCommands(ctx)
-    });
+
 
     bot.on('callback_query', async (ctx, next) => {
 
         const callbackData = ctx.callbackQuery.data;
         console.log("running callback query to remove text and keyboard: ", callbackData)
 
-        try {
+        console.log("callback: ", callbackData)
+        console.log("deleting the only time I can find.")
 
-            switch (callbackData) {
-                // case 'show_commands':
-                //     await next();
-                //     await ctx.answerCbQuery('main menu');
-                //     break;
-                default:
-                    console.log("callback: ", callbackData)
+        ctx.deleteMessage().catch((error) => {
+            console.error("CAUGHT: Error deleting message:", error);
+        });
 
-                    await ctx.editMessageReplyMarkup({ parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
-                    await next();
-                    await ctx.answerCbQuery('topic/skill button pressed');
-            }
-        } catch (error) {
-            // I think this happens when a user clicks an inline keyboard but the bot is not running.
-            /// ... when the bot starts up it processes all the messages in the queue... so it will process the callback query... 
-            //// ...  'Bad Request: query is too old and response timeout expired or query ID is invalid'
-            console.error("Error in callback_query: ", error);
-        }
+        await next();
+        await ctx.answerCbQuery('topic/skill button pressed');
+    });
+
+    bot.action('show_commands', async ctx => {
+        // ctx.deleteMessage();
+        ShowTopLevelCommands(ctx)
     });
 
 
@@ -74,6 +66,8 @@ export async function setupBot(bot) {
     teachBitcoin(bot);
     teachBraiins(bot);
     teachMiner(bot);
+    teachChatGPT(bot);
+
 
 
     // NOTE: THIS NEEDS TO BE LAST!!!

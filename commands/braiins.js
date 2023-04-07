@@ -5,8 +5,6 @@ import { Markup } from 'telegraf';
 // REFERENCE: https://help.braiins.com/en/support/solutions/articles/77000433512-api-configuration-guide#Worker-API
 
 async function braiins_TopLevelMenu(ctx) {
-    // console.log("Braiins command called")
-    // ctx.answerCbQuery('Available Braiins API Commands:');
 
     const token = process.env.BRAIINS_TOKEN || undefined;
 
@@ -27,8 +25,6 @@ async function braiins_TopLevelMenu(ctx) {
 
 
 async function braiins_user(ctx) {
-    // console.log("Braiins user button pressed")
-    // ctx.answerCbQuery('Checking BraiinsPool API...');
 
     const coin = 'btc';
     const url = `https://pool.braiins.com/accounts/profile/json/${coin}/`
@@ -42,15 +38,9 @@ async function braiins_user(ctx) {
         .then(async json => {
             console.log(json);
 
-            // Remove the inline keyboard buttons
-            // await ctx.editMessageReplyMarkup({ inline_keyboard: [] });
-            await ctx.editMessageText("Braiins user info:", { reply_markup: { inline_keyboard: [] } });
-            // ctx.deleteMessage();
-
             const prettyData = JSON.stringify(json, null, 2);
-            await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
+            await ctx.reply(`Braiins user info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
 
-            // ShowTopLevelCommands(ctx);
             braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
@@ -74,13 +64,9 @@ async function braiins_workers(ctx) {
         .then(async json => {
             console.log(json);
 
-            await ctx.editMessageText("Braiins worker info:", { reply_markup: { inline_keyboard: [] } });
-            // ctx.deleteMessage();
-
             const prettyData = JSON.stringify(json, null, 2);
-            await ctx.reply(`<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
+            await ctx.reply(`Braiins worker info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
 
-            // ShowTopLevelCommands(ctx);
             braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
@@ -90,11 +76,7 @@ async function braiins_workers(ctx) {
 }
 
 export function teachBraiins(bot) {
-    // bot.command('braiins', braiinsCommand);
-    // bot.action('braiins_action', braiinsCommand);
-
     bot.action('braiins_TopLevelMenu', async ctx => {
-        ctx.deleteMessage();
         braiins_TopLevelMenu(ctx);
     });
 

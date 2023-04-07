@@ -1,10 +1,45 @@
 import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+import OpenAI from 'openai';
 import { Markup } from 'telegraf';
 
 import { setModeCallback, mode_callback } from '../helpers.js';
 
+dotenv.config();
 
-// TODO: add open ai API key
+
+const openaiApiKey = process.env.OPENAI_KEY
+OpenAI.apiKey = openaiApiKey;
+
+
+
+async function generateResponse(prompt) {
+    const openaiUrl = 'https://api.openai.com/v1/engines/text-davinci-003/completions';
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+    };
+    const body = JSON.stringify({
+        prompt: prompt,
+        max_tokens: 500,
+        n: 1,
+        stop: null,
+        temperature: 0.5,
+    });
+
+    const response = await fetch(openaiUrl, {
+        method: 'POST',
+        headers: headers,
+        body: body,
+    });
+
+    const data = await response.json();
+    console.log(data);
+    // return data;
+    return data.choices[0].text.trim();
+}
+
+
 
 export async function chatGPT_TopLevelMenu(ctx) {
     const inlineKeyboard = Markup.inlineKeyboard([
@@ -12,11 +47,11 @@ export async function chatGPT_TopLevelMenu(ctx) {
         Markup.button.callback('run a prompt', 'run_prompt')
     ]);
 
-    await ctx.reply('chatGPT API', inlineKeyboard);
+    await ctx.reply('🦾 <b>chatGPT API:</b> 🤖', { parse_mode: 'HTML', reply_markup: inlineKeyboard });
 }
 
 async function ask_prompt(ctx) {
-    ctx.deleteMessage();
+    // ctx.deleteMessage();
     setModeCallback(null);
 
     const prompt = ctx.message.text;
@@ -27,7 +62,8 @@ async function ask_prompt(ctx) {
         return;
     }
 
-    await ctx.reply(`Prompt: ${prompt}`);
+    const ans = await generateResponse(prompt);
+    await ctx.reply(`${ans}`);
 
     chatGPT_TopLevelMenu(ctx); //TODO: do I really have to send the context...?  can't I just do a bot.telegram.sendMessage()??!?!?!?
 }

@@ -1,12 +1,19 @@
 import fetch from 'node-fetch';
 import { Markup } from 'telegraf';
 
+import dotenv from 'dotenv';
+
 import { bot } from '../app.js';
 import { setModeCallback } from '../helpers.js';
 
+dotenv.config();
 
-// const priceCheckInterval = 1000 * 60 * 5; // 5 minutes
-const priceCheckInterval = 1000 * 3; // 3 seconds
+let PRICE_CHECK_INTERVAL;
+if (process.env.DEBUG == 1){
+    PRICE_CHECK_INTERVAL = 1000 * 5; // 5 seconds
+} else {
+    PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
+}
 
 let priceCeiling = null;
 let priceCeilingIntervalID = null;
@@ -41,7 +48,6 @@ async function block_height(ctx) {
         return;
     }
 
-    // await ctx.editMessageText(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
     await ctx.reply(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
 
     bitcoin_TopLevelMenu(ctx);
@@ -70,15 +76,6 @@ async function price(ctx) {
     const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
     const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
 
-    // NOTE: we edit so that we can destory the prior text/menu title and keyboard
-    // try {
-    //     await ctx.editMessageText('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
-    // } catch (error) {
-    //     console.log("MAYBE THIS WORKS???")
-    //     /// NOTE: yes, this works... because we delete the message in setCeiling() and setFloor() (to keep the action items at the bottom, we have to reply instead of edit)
-    //     await ctx.reply(':', { reply_markup: { inline_keyboard: inlineKeyboard } });
-    // }
-    // NOTE: ... then we reply so that it stays in the chat history.
     await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
     await ctx.reply('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
 }
@@ -87,7 +84,6 @@ async function price(ctx) {
 
 async function setCeiling(ctx) {
     console.log("Set Ceiling button pressed")
-    // await ctx.editMessageText('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     await ctx.reply('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustCeiling);
 }
@@ -95,8 +91,7 @@ async function setCeiling(ctx) {
 
 async function setFloor(ctx) {
     console.log("Set Floor button pressed")
-    await ctx.editMessageText('Enter price floor: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
-    // await ctx.reply('Enter price floor: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
+    await ctx.reply('Enter price floor: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustFloor);
 }
 
@@ -119,7 +114,7 @@ async function adjustCeiling(ctx) {
 
     if (isNaN(ceiling)) {
         console.log("ERROR: Not a number");
-        ctx.editMessageText("ERROR: Not a number");
+        ctx.reply("ERROR: Not a number");
         return;
     }
 
@@ -130,12 +125,9 @@ async function adjustCeiling(ctx) {
     setModeCallback(null);
 
     priceCeiling = ceiling;
-    priceCeilingIntervalID = setInterval(checkPriceCeiling, priceCheckInterval);
-
-    // bitcoin_TopLevelMenu(ctx);
+    priceCeilingIntervalID = setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
 
     price(ctx);
-    // setNotify(ctx); // THIS DOESN'T WORK!  It will cause an error
 }
 
 
@@ -157,7 +149,7 @@ async function adjustFloor(ctx) {
 
     if (isNaN(floor)) {
         console.log("ERROR: Not a number");
-        ctx.editMessageText("ERROR: Not a number");
+        ctx.reply("ERROR: Not a number");
         return;
     }
 
@@ -168,9 +160,10 @@ async function adjustFloor(ctx) {
     setModeCallback(null);
 
     priceFloor = floor;
-    priceFloorIntervalID = setInterval(checkPriceFloor, priceCheckInterval);
+    priceFloorIntervalID = setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
 
     bitcoin_TopLevelMenu(ctx);
+    price(ctx);
 }
 
 
@@ -246,7 +239,7 @@ async function checkPriceFloor() {
         // Send the new alert message and store its ID
         const sentMessage = await bot.telegram.sendMessage(
             process.env.CHAT_ID,
-            `⚡️📈  <b>Price floor hit: ${price}</b> 📈⚡️`,
+            `⚡️📉  <b>Price floor hit: ${price}</b> 📉⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
 
@@ -266,7 +259,6 @@ async function acknowledgeCeilingAlert(ctx) {
 
 
 async function acknowledgeFloorAlert(ctx) {
-    // await ctx.answerCbQuery(); // Answer the callback query
     priceFloor = null;
     clearInterval(priceFloorIntervalID);
     await ctx.reply('Price floor alerts stopped.');

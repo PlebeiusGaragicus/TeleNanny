@@ -33,7 +33,7 @@ app.get('/settings', (req, res) => {
 
 
 app.post('/settings', (req, res) => {
-    const { botToken, chatId, braiinsToken } = req.body;
+    const { botToken, chatId, braiinsToken, openAIToken } = req.body;
     const envContent = `TELEGRAM_BOT_TOKEN=${botToken}\nCHAT_ID=${chatId}\nBRAIINS_TOKEN=${braiinsToken}\nOPENAI_TOKEN=${openAIToken}`;
 
     fs.writeFile(path.join(process.cwd(), '.env'), envContent, (err) => {

@@ -42,12 +42,16 @@ async function generateResponse(prompt) {
 
 
 export async function chatGPT_TopLevelMenu(ctx) {
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('run a prompt', 'run_prompt')
-    ]);
+    // const inlineKeyboard = Markup.inlineKeyboard([
+    //     Markup.button.callback('<-', 'show_commands'),
+    //     Markup.button.callback('run a prompt', 'run_prompt')
+    // ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [Markup.button.callback('run a prompt', 'run_prompt')]
+    ];
 
-    await ctx.reply('🦾 <b>chatGPT API:</b> 🤖', { parse_mode: 'HTML', reply_markup: inlineKeyboard });
+    await ctx.reply('🦾 <b>chatGPT API:</b> 🤖', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 async function ask_prompt(ctx) {

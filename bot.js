@@ -32,7 +32,6 @@ export async function setupBot(bot) {
             justLaunched = false;
 
         console.log("start command called - CHAT ID: ", ctx.chat.id, " - FROM: ", ctx.from.username, "User ID: ", ctx.from.id);
-        // ctx.deleteMessage();
 
         ShowTopLevelCommands(ctx)
     });
@@ -56,7 +55,6 @@ export async function setupBot(bot) {
     });
 
     bot.action('show_commands', async ctx => {
-        // ctx.deleteMessage();
         ShowTopLevelCommands(ctx)
     });
 

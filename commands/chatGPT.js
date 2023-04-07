@@ -8,7 +8,7 @@ import { setModeCallback, mode_callback } from '../helpers.js';
 dotenv.config();
 
 
-const openaiApiKey = process.env.OPENAI_KEY
+const openaiApiKey = process.env.OPENAI_TOKEN
 OpenAI.apiKey = openaiApiKey;
 
 

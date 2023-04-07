@@ -27,13 +27,14 @@ app.get('/settings', (req, res) => {
         BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
         CHAT_ID: process.env.CHAT_ID,
         BRAIINS_TOKEN: process.env.BRAIINS_TOKEN,
+        OPENAI_TOKEN: process.env.OPENAI_TOKEN,
     });
 });
 
 
 app.post('/settings', (req, res) => {
     const { botToken, chatId, braiinsToken } = req.body;
-    const envContent = `TELEGRAM_BOT_TOKEN=${botToken}\nCHAT_ID=${chatId}\nBRAIINS_TOKEN=${braiinsToken}\n`;
+    const envContent = `TELEGRAM_BOT_TOKEN=${botToken}\nCHAT_ID=${chatId}\nBRAIINS_TOKEN=${braiinsToken}\nOPENAI_TOKEN=${openAIToken}`;
 
     fs.writeFile(path.join(process.cwd(), '.env'), envContent, (err) => {
         if (err) {

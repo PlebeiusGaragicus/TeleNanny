@@ -41,8 +41,8 @@ async function block_height(ctx) {
         return;
     }
 
-    await ctx.editMessageText(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
-    // await ctx.reply(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
+    // await ctx.editMessageText(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
+    await ctx.reply(`Bitcoin tip height (mempool):\n<pre>${height}</pre>`, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [] } });
 
     bitcoin_TopLevelMenu(ctx);
 }
@@ -71,22 +71,22 @@ async function price(ctx) {
     const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
 
     // NOTE: we edit so that we can destory the prior text/menu title and keyboard
-    try {
-        await ctx.editMessageText('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
-    } catch (error) {
-        console.log("MAYBE THIS WORKS???")
-        /// NOTE: yes, this works... because we delete the message in setCeiling() and setFloor() (to keep the action items at the bottom, we have to reply instead of edit)
-        await ctx.reply(':', { reply_markup: { inline_keyboard: inlineKeyboard } });
-    }
+    // try {
+    //     await ctx.editMessageText('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
+    // } catch (error) {
+    //     console.log("MAYBE THIS WORKS???")
+    //     /// NOTE: yes, this works... because we delete the message in setCeiling() and setFloor() (to keep the action items at the bottom, we have to reply instead of edit)
+    //     await ctx.reply(':', { reply_markup: { inline_keyboard: inlineKeyboard } });
+    // }
     // NOTE: ... then we reply so that it stays in the chat history.
     await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
+    await ctx.reply('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
 
 async function setCeiling(ctx) {
     console.log("Set Ceiling button pressed")
-    ctx.deleteMessage();
     // await ctx.editMessageText('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     await ctx.reply('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustCeiling);
@@ -308,7 +308,7 @@ async function getBlockHeight() {
 
 export function teachBitcoin(bot) {
     bot.action('bitcoin_TopLevelMenu', async ctx => {
-        ctx.deleteMessage();
+        // ctx.deleteMessage();
         bitcoin_TopLevelMenu(ctx);
     });
 

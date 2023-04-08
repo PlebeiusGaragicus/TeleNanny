@@ -14,13 +14,18 @@ async function braiins_TopLevelMenu(ctx) {
         return;
     }
 
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('user stats', 'user_action'),
-        Markup.button.callback('workers', 'workers_action'),
-    ]);
+    // const inlineKeyboard = Markup.inlineKeyboard([
+    //     Markup.button.callback('<-', 'show_commands'),
+    //     Markup.button.callback('user stats', 'user_action'),
+    //     Markup.button.callback('workers', 'workers_action'),
+    // ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [Markup.button.callback('user stats', 'user_action'),
+        Markup.button.callback('workers', 'workers_action')]
+    ];
 
-    await ctx.reply('Query the Braiins API:', inlineKeyboard);
+    await ctx.reply('<b>🧠 Braiins Pool:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 

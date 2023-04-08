@@ -10,12 +10,16 @@ const TEMP_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
 
 
 export async function miner_TopLevelMenu(ctx) {
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('temperature', 'miner_temp')
-    ]);
+    // const inlineKeyboard = Markup.inlineKeyboard([
+    //     Markup.button.callback('<-', 'show_commands'),
+    //     Markup.button.callback('temperature', 'miner_temp')
+    // ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [Markup.button.callback('temperature', 'miner_temp')]
+    ];
 
-    await ctx.reply('Query miner status', inlineKeyboard);
+    await ctx.reply('<b>🎛️ Miner status</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 

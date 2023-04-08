@@ -9,7 +9,7 @@ import { setModeCallback } from '../helpers.js';
 dotenv.config();
 
 let PRICE_CHECK_INTERVAL;
-if (process.env.DEBUG == 1){
+if (process.env.DEBUG == 1) {
     PRICE_CHECK_INTERVAL = 1000 * 5; // 5 seconds
 } else {
     PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
@@ -24,13 +24,20 @@ let priceFloorIntervalID = null;
 
 
 export async function bitcoin_TopLevelMenu(ctx) {
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('price', 'price'),
-        Markup.button.callback('block height', 'block_height')
-    ]);
+    // const inlineKeyboard = Markup.inlineKeyboard([
+    //     Markup.button.callback('<-', 'show_commands'),
+    //     Markup.button.callback('price', 'price'),
+    //     Markup.button.callback('block height', 'block_height')
+    // ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [
+            Markup.button.callback('price', 'price'),
+            Markup.button.callback('block height', 'block_height')
+        ]
+    ];
 
-    await ctx.reply('Bitcoin network:', inlineKeyboard);
+    await ctx.reply('<b>Bitcoin network:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
@@ -65,19 +72,20 @@ async function price(ctx) {
         return;
     }
 
+    const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
+    const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
+    // POST THE PRICE/ALERT STATUS IN THE CHAT
+    await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
+
     const inlineKeyboard = [
+        [Markup.button.callback('<-', 'bitcoin_TopLevelMenu')],
         [
-            Markup.button.callback('<-', 'bitcoin_TopLevelMenu'),
             Markup.button.callback('price ceiling', 'setCeiling'),
             Markup.button.callback('price floor', 'setFloor')
         ]
     ];
-
-    const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
-    const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
-
-    await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
-    await ctx.reply('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
+    // SHOW A SUBMENU
+    await ctx.reply('💰 <b>Bitcoin price and alerts:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
@@ -162,7 +170,6 @@ async function adjustFloor(ctx) {
     priceFloor = floor;
     priceFloorIntervalID = setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
 
-    bitcoin_TopLevelMenu(ctx);
     price(ctx);
 }
 

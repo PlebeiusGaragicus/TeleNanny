@@ -5,10 +5,10 @@ async function fetchSettings() {
     const response = await fetch('/settings');
     const settings = await response.json();
 
-    document.getElementById('botToken').value = settings.BOT_TOKEN || '';
-    document.getElementById('chatId').value = settings.CHAT_ID || '';
-    document.getElementById('braiinsToken').value = settings.BRAIINS_TOKEN || '';
-    document.getElementById('openAIToken').value = settings.OPENAI_TOKEN || '';
+    document.getElementById('botToken').value = settings.botToken || '';
+    document.getElementById('chatId').value = settings.chatId || '';
+    document.getElementById('braiinsToken').value = settings.braiinsToken || '';
+    document.getElementById('openAIToken').value = settings.openAIToken || '';
 }
 
 // This grabs the submit button and adds funcionality

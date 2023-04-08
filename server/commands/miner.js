@@ -142,6 +142,7 @@ export function teachMiner(bot) {
 
     bot.action('miner_temp', miner_temp);
 
-    checkTemps(bot); // run once immediately
-    setInterval(checkTemps, TEMP_CHECK_INTERVAL, bot);
+    //TODO: Need to fail gracefully if the miner is not found (e.g., if it's not on the network bc I'm at work)
+    // checkTemps(bot); // run once immediately
+    // setInterval(checkTemps, TEMP_CHECK_INTERVAL, bot);
 }

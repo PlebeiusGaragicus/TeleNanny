@@ -1,25 +1,18 @@
 import fetch from 'node-fetch';
 import { Markup } from 'telegraf';
 
-import dotenv from 'dotenv';
-
-import { bot } from '../app.js';
+import { bot } from '../bot.js';
 import { setModeCallback } from '../helpers.js';
+import { setValue, getValue } from '../database.js';
 
-dotenv.config();
 
-let PRICE_CHECK_INTERVAL;
-if (process.env.DEBUG == 1) {
-    PRICE_CHECK_INTERVAL = 1000 * 5; // 5 seconds
-} else {
-    PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
-}
+// const PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
+const PRICE_CHECK_INTERVAL = 1000 * 5; // 5 seconds
+console.log("PRICE_CHECK_INTERVAL: ", PRICE_CHECK_INTERVAL)
 
-let priceCeiling = null;
-let priceCeilingIntervalID = null;
 
-let priceFloor = null;
-let priceFloorIntervalID = null;
+// let priceFloor = null;
+// let priceFloorIntervalID = null;
 
 
 
@@ -72,8 +65,13 @@ async function price(ctx) {
         return;
     }
 
-    const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
-    const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
+    // TODO
+    // const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
+    // const calert = await getPriceCeiling();
+    const calert = await getValue("alerts", 'priceCeiling');
+    // const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
+    // const falert = await getPriceFloor();
+    const falert = await getValue("alerts", 'priceFloor');
     // POST THE PRICE/ALERT STATUS IN THE CHAT
     await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
 
@@ -91,14 +89,12 @@ async function price(ctx) {
 
 
 async function setCeiling(ctx) {
-    console.log("Set Ceiling button pressed")
     await ctx.reply('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustCeiling);
 }
 
 
 async function setFloor(ctx) {
-    console.log("Set Floor button pressed")
     await ctx.reply('Enter price floor: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustFloor);
 }
@@ -113,8 +109,11 @@ async function adjustCeiling(ctx) {
     if (ceiling == 0) {
         console.log("Price ceiling cancelled");
         ctx.reply("Price ceiling cancelled");
-        priceCeiling = null;
-        clearInterval(priceCeilingIntervalID);
+
+        // const { _, intervalID } = getPriceCeiling();
+        // clearInterval(intervalID);
+        // await setPriceCeiling(null);
+        await setValue("alerts", "priceCeiling", null);
 
         price(ctx);
         return;
@@ -132,8 +131,10 @@ async function adjustCeiling(ctx) {
 
     setModeCallback(null);
 
-    priceCeiling = ceiling;
-    priceCeilingIntervalID = setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
+    // priceCeiling = ceiling;
+    // priceCeilingIntervalID = setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
+    // await setPriceCeiling(ceiling);
+    await setValue("alerts", "priceCeiling", ceiling);
 
     price(ctx);
 }
@@ -148,8 +149,10 @@ async function adjustFloor(ctx) {
     if (floor == 0) {
         console.log("Price floor cancelled");
         ctx.reply("Price floor cancelled");
-        priceFloor = null;
-        clearInterval(priceFloorIntervalID);
+        // priceFloor = null;
+        // clearInterval(priceFloorIntervalID);
+        // await setPriceFloor(null);
+        await setValue("alerts", "priceFloor", null);
 
         price(ctx);
         return;
@@ -167,8 +170,10 @@ async function adjustFloor(ctx) {
 
     setModeCallback(null);
 
-    priceFloor = floor;
-    priceFloorIntervalID = setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
+    // priceFloor = floor;
+    // priceFloorIntervalID = setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
+    // await setPriceFloor(floor);
+    await setValue("alerts", "priceFloor", floor);
 
     price(ctx);
 }
@@ -178,6 +183,14 @@ async function adjustFloor(ctx) {
 let lastCeilingAlertMessageId = null;
 
 async function checkPriceCeiling() {
+    // const priceCeiling = await getPriceCeiling();
+    const priceCeiling = await getValue("alerts", 'priceCeiling');
+
+    if (priceCeiling == null) {
+        // console.log("priceCeiling is not set - skipping check");
+        return;
+    }
+
     const price = await getPrice();
 
     if (price == null) {
@@ -219,6 +232,14 @@ async function checkPriceCeiling() {
 let lastFloorAlertMessageId = null;
 
 async function checkPriceFloor() {
+    // const priceFloor = await getPriceFloor();
+    const priceFloor = await getValue("alerts", 'priceFloor');
+
+    if (priceFloor == null) {
+        // debug("priceFloor is not set - skipping check");
+        return;
+    }
+
     const price = await getPrice();
 
     if (price == null) {
@@ -228,7 +249,7 @@ async function checkPriceFloor() {
     }
 
     if (price < priceFloor) {
-        console.log("Price floor hit: ", price);
+        // debug("Price floor hit: ", price);
 
         const acknowledgeKeyboard = [
             [Markup.button.callback('Acknowledge', 'acknowledgeFloorAlert')],
@@ -259,15 +280,20 @@ async function checkPriceFloor() {
 async function acknowledgeCeilingAlert(ctx) {
     // TODO: where do I need to answer the cb query...? I'm confused.
     // await ctx.answerCbQuery(); // Answer the callback query
-    priceCeiling = null;
-    clearInterval(priceCeilingIntervalID);
+
+    // await setPriceCeiling(null);
+    await setValue("alerts", "priceCeiling", null);
+    // priceCeiling = null;
+    // clearInterval(priceCeilingIntervalID);
     await ctx.reply('Price ceiling alerts stopped.');
 }
 
 
 async function acknowledgeFloorAlert(ctx) {
-    priceFloor = null;
-    clearInterval(priceFloorIntervalID);
+    // await setPriceFloor(null);
+    await setValue("alerts", "priceFloor", null);
+    // priceFloor = null;
+    // clearInterval(priceFloorIntervalID);
     await ctx.reply('Price floor alerts stopped.');
 }
 
@@ -325,6 +351,7 @@ export function teachBitcoin(bot) {
     // SUBJECT
     bot.action('block_height', block_height);
 
-    // SKILLS
-    // ...
+    // ALERTS
+    setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
+    setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
 }

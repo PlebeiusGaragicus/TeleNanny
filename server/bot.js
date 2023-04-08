@@ -1,11 +1,15 @@
-import { ShowTopLevelCommands, mode_callback } from './helpers.js';
+import { Telegraf } from 'telegraf';
 
+import { getValue } from './database.js';
+import { ShowTopLevelCommands, mode_callback } from './helpers.js';
 
 import { teachBitcoin } from './commands/bitcoin.js';
 import { teachBraiins } from './commands/braiins.js';
 import { teachMiner } from './commands/miner.js';
 import { teachChatGPT } from './commands/chatGPT.js';
 
+// export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+export let bot = null;
 
 // TODO: unsure of this.  I don't want multiple menus up and running.  So, I don't want the user to do /start again and again.
 let justLaunched = true;
@@ -84,29 +88,13 @@ export async function setupBot(bot) {
     })
 
 
-
-
-
-
-
-    //// TODO: I'm not sure this is needed...
-    //// Send a message to the chat id that the bot is running on
-    //// ... it ensures the bot will only chat with the 
-    // const targetChatId = process.env.CHAT_ID || undefined
-    // if (targetChatId === undefined) {
-    //     console.error("CHAT ID is not setup in .env\nuse \/get_chat_id then use the web portal to save it.")
-    //     // process.exit(1)
-    // }
-    // else
-
     //// 'MIDDLEWARE' THAT RESTRICTS WHICH USER THE BOT WILL RESPOND TO ////
-    // TODO: I NEED TO TEST THIS!!!
-    const ALLOWED_USER_ID = process.env.CHAT_ID || undefined
-    if (ALLOWED_USER_ID === undefined) {
+    const chatID = getValue("tokens", "chat_id");
+    if (chatID === null) {
         console.log(">>> WARNING!!!\n>>>\tCHAT_ID not set.  Please set this in the .env file.\n>>>\tThis is the Telegram user ID that will be allowed to use this bot.\n>>>\tYou can find your user ID by sending a message to @userinfobot\n>>>\n");
     } else {
         bot.use((ctx, next) => {
-            if (ctx.from.id.toString() === ALLOWED_USER_ID) {
+            if (ctx.from.id.toString() === chatID) {
                 return next();
             } else {
                 console.log(`Unauthorized access attempt by user ID: ${ctx.from.id}`);
@@ -114,29 +102,83 @@ export async function setupBot(bot) {
             }
         });
         //// SAY HELLO
-        bot.telegram.sendMessage(ALLOWED_USER_ID, `Hello,\nI'm awake and ready to /start`);
-
-        let sigintHandled = false;
-
-        process.on('SIGINT', () => {
-            console.log("SIGINT");
-
-            if (sigintHandled) {
-                return; // Exit early if SIGINT has already been handled
-            } else {
-                sigintHandled = true;
-            }
-
-            // ⚰️☠️🪦
-            bot.telegram.sendMessage(ALLOWED_USER_ID, `⚠️ *BOT SHUTDOWN\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
-                .then(() => {
-                    console.log("process exiting...");
-                    process.exit(0);
-                })
-                .catch((err) => {
-                    console.error(err);
-                    process.exit(1); // exit with error status
-                });
-        });
+        bot.telegram.sendMessage(chatID, `Hello,\nI'm awake and ready to /start`);
     }
 }
+
+
+export async function killBot() {
+    return new Promise(async (resolve, reject) => {
+        console.log("killing bot...");
+
+        if (bot === null) {
+            console.log("bot is null - nevermind...");
+            resolve();
+            return;
+            // } else {
+            // console.log(bot);
+        }
+
+        bot
+        try {
+            await bot.stop();
+        } catch (error) {
+            console.error("ERROR: bot.stop() failed:", error);
+        }
+
+        const id = getValue("tokens", "chat_id")
+        bot.telegram.sendMessage(id, `⚠️ *BOT SHUTDOWN\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
+            .then(() => {
+                console.log("process exiting...");
+                resolve();
+            })
+            .catch((err) => {
+                console.error(err);
+                reject(err);
+            });
+    });
+};
+
+
+export async function initBot() {
+    console.log("Starting bot...");
+
+    const token = getValue("tokens", "telegram_bot_token");
+    console.log("bot token:", token);
+
+    if (token == null) {
+        console.error("ERROR: Telegram bot token is not set.");
+        return;
+    }
+
+    const id = getValue("tokens", "chat_id");
+    console.log("chat id:", id);
+
+    if (id == null) {
+        console.error("ERROR: Telegram chat id is not set.");
+        return;
+    }
+
+    bot = new Telegraf(token);
+
+    await clearPendingMessages();
+
+    bot.launch();
+    setupBot(bot);
+}
+
+
+
+export async function clearPendingMessages() {
+    let updates = await bot.telegram.getUpdates();
+
+    for (const update of updates) {
+        console.log("ignoring updates while bot was offline:", update);
+        await bot.handleUpdate(update);
+    }
+}
+
+// clearPendingMessages().then(() => {
+//     bot.launch();
+//     setupBot(bot);
+// });

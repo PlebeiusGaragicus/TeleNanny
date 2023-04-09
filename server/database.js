@@ -1,9 +1,10 @@
 import { MongoClient } from 'mongodb';
 
-const DATABASE_NAME = 'teleNanny';
+import config from './config.js';
 
-const uri = "mongodb://localhost:27017/";
-export const client = new MongoClient(uri, { useNewUrlParser: true });
+
+
+export const client = new MongoClient(config.DB_URI, { useNewUrlParser: true });
 export let db = null;
 
 
@@ -11,7 +12,7 @@ export let db = null;
 export async function connectToMongoDB() {
     await client.connect();
     console.log("Connected to MongoDB");
-    db = client.db(DATABASE_NAME);
+    db = client.db(config.DB_DATABASE_NAME);
 }
 
 
@@ -38,9 +39,9 @@ export async function closeMongoDBConnection() {
 
 
 
-export async function setValue(collection_name, name, value) {
+export async function setValue(name, value) {
     try {
-        const collection = db.collection(collection_name);
+        const collection = db.collection(config.DB_COLLECTION_NAME);
         await collection.updateOne({ name: name }, {
             $set: { value: value }
         }, { upsert: true });
@@ -50,9 +51,9 @@ export async function setValue(collection_name, name, value) {
 }
 
 
-export async function getValue(collection_name, name) {
+export async function getValue(name) {
     try {
-        const collection = db.collection(collection_name);
+        const collection = db.collection(config.DB_COLLECTION_NAME);
         const item = await collection.findOne({ name: name });
 
         if (!item)

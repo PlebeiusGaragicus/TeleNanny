@@ -1,38 +1,22 @@
 import puppeteer from 'puppeteer';
 import cheerio from 'cheerio';
-import twilio from 'twilio';
-import dotenv from 'dotenv';
 
-dotenv.config({ path: '../.env' });
+import { getValue } from '../database.js';
+import { bot } from '../bot.js';
 
-const config = {
-    UNIT: process.env.UNIT,
-    UNIT_PHONETIC: process.env.UNIT_PHONETIC,
-    INTTERRA_USERNAME: process.env.INTTERRA_USERNAME,
-    INTTERRA_PASSWORD: process.env.INTTERRA_PASSWORD,
-    TWILIO_SID: process.env.TWILIO_SID,
-    TWILIO_TOKEN: process.env.TWILIO_TOKEN,
-    TWILIO_PHONENUMBER_TO: process.env.TWILIO_PHONENUMBER_TO,
-    TWILIO_PHONENUMBER_FROM: process.env.TWILIO_PHONENUMBER_FROM,
-};
 
-const client = twilio(config.TWILIO_SID, config.TWILIO_TOKEN);
-
-function sendSMS(msg) {
-    client.messages.create({
-        to: config.TWILIO_PHONENUMBER_TO,
-        from: config.TWILIO_PHONENUMBER_FROM,
-        body: msg,
-    });
+async function alertUser(msg) {
+    const chatID = await getValue('chat_id');
+    await bot.telegram.sendMessage(chatID, msg);
 }
 
 function phoneticAddress(address) {
-    address = address.replace("NW ", "northwest ");
-    address = address.replace("NE ", "northeast ");
-    address = address.replace("SW ", "southwest ");
-    address = address.replace("SE ", "southeast ");
-    address = address.replace("N ", "north ");
-    address = address.replace("S ", "south ");
+    address = address.replace(" NW ", "northwest ");
+    address = address.replace(" NE ", "northeast ");
+    address = address.replace(" SW ", "southwest ");
+    address = address.replace(" SE ", "southeast ");
+    address = address.replace(" N ", "north ");
+    address = address.replace(" S ", "south ");
 
     address = address.replace(" AVE", " avenue");
     address = address.replace(" ST", "street ");
@@ -44,11 +28,13 @@ function phoneticAddress(address) {
     return address;
 }
 
-function speak(call, address, latlon) {
+async function speak(call, address, latlon) {
     console.log(`CALL: ${call} at ${address}`);
     // Replace this line with the appropriate text-to-speech library or API call for your system
-    console.log(`say ${config.UNIT_PHONETIC} has a ${call} at ${phoneticAddress(address)}`);
-    sendSMS(`${call}\n${address}\nhttps://www.google.com/maps/place/${latlon}`);
+    // const phonetic_unit = await getValue('intterra_unit_phonetic');
+    // console.log(`say ${phonetic_unit} has a ${call} at ${phoneticAddress(address)}`);
+    // sendSMS(`${call}\n${address}\nhttps://www.google.com/maps/place/${latlon}`);
+    alertUser(`${call}\n\n${address}`);
 }
 
 
@@ -67,9 +53,17 @@ async function openPage() {
 
 async function login(page) {
     console.log("Logging in to Intterra...")
-    await page.type('[name="username"]', config.INTTERRA_USERNAME);
-    await page.type('[name="password"]', config.INTTERRA_PASSWORD);
-    // await page.click('//button');
+    const user = await getValue('intterra_username');
+    const pass = await getValue('intterra_password');
+
+    console.log("user: ", user, " pass: ", pass)
+    if (!user || !pass) {
+        console.error("Intterra username or password not set in database");
+        return;
+    }
+
+    await page.type('[name="username"]', user);
+    await page.type('[name="password"]', pass);
     await page.click('button.primary');
     await page.waitForTimeout(5000);
     console.log("Survived 5 second login timeout")
@@ -79,6 +73,9 @@ async function login(page) {
 async function alertLoop(page) {
     let lastCall = null;
     let allCalls = null;
+
+    const unit = await getValue('intterra_unit');
+    console.log("Interra is watching unit: ", unit);
 
     while (true) {
         const html = await page.content();
@@ -100,9 +97,9 @@ async function alertLoop(page) {
                 const [_unit, addr] = unitsAddr.split('●').slice(1).map(s => s.trim());
                 const units = _unit.split(' ');
 
-                if (units.includes(config.UNIT)) {
+                if (units.includes(unit)) {
                     if (!lastCall || (call !== lastCall[0] || addr !== lastCall[1])) {
-                        console.log(`NEW CALL!!!! ${config.UNIT} - ${call} - ${addr}`);
+                        console.log(`NEW CALL!!!! ${unit} - ${call} - ${addr}`);
 
                         // Add any additional logic for clicking elements, refreshing the page, etc.
 
@@ -122,10 +119,10 @@ async function alertLoop(page) {
 
         if (!arraysEqual(allCalls, calls)) {
             allCalls = calls;
-            console.log('\n\n\n\n');
-            calls.forEach((call) => {
-                console.log(call);
-            });
+            // console.log('\n\n\n\n');
+            // calls.forEach((call) => {
+            //     console.log(call);
+            // });
         }
 
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -160,8 +157,7 @@ function arraysEqual(a, b) {
 //     return true;
 // }
 
-
-(async () => {
+export async function runIntterra() {
     console.log("Starting Intterra Alert Listener")
     const { browser, page } = await openPage();
     await login(page);
@@ -171,4 +167,4 @@ function arraysEqual(a, b) {
         console.error(e);
         await browser.close();
     }
-})();
+}

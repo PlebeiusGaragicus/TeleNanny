@@ -89,7 +89,7 @@ export async function setupBot(bot) {
 
 
     //// 'MIDDLEWARE' THAT RESTRICTS WHICH USER THE BOT WILL RESPOND TO ////
-    const chatID = getValue("tokens", "chat_id");
+    const chatID = await getValue("chat_id");
     if (chatID === null) {
         console.log(">>> WARNING!!!\n>>>\tCHAT_ID not set.  Please set this in the .env file.\n>>>\tThis is the Telegram user ID that will be allowed to use this bot.\n>>>\tYou can find your user ID by sending a message to @userinfobot\n>>>\n");
     } else {
@@ -126,7 +126,7 @@ export async function killBot() {
             console.error("ERROR: bot.stop() failed:", error);
         }
 
-        const id = getValue("tokens", "chat_id")
+        const id = await getValue("chat_id")
         bot.telegram.sendMessage(id, `⚠️ *BOT SHUTDOWN\\!* ⚠️`, { parse_mode: 'MarkdownV2' })
             .then(() => {
                 console.log("process exiting...");
@@ -143,7 +143,7 @@ export async function killBot() {
 export async function initBot() {
     console.log("Starting bot...");
 
-    const token = getValue("tokens", "telegram_bot_token");
+    const token = await getValue("telegram_bot_token");
     console.log("bot token:", token);
 
     if (token == null) {
@@ -151,7 +151,7 @@ export async function initBot() {
         return;
     }
 
-    const id = getValue("tokens", "chat_id");
+    const id = await getValue("chat_id");
     console.log("chat id:", id);
 
     if (id == null) {

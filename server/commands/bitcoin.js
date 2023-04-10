@@ -60,7 +60,7 @@ async function price(ctx) {
     const calert = await getValue('priceCeiling');
     const falert = await getValue('priceFloor');
     await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
-    
+
     // SHOW A SUBMENU
     const inlineKeyboard = [
         [Markup.button.callback('<-', 'bitcoin_TopLevelMenu')],
@@ -177,22 +177,23 @@ async function checkPriceCeiling() {
         ];
 
         // Delete the previous alert message if it exists
-        if (lastCeilingAlertMessageId) {
-            try {
-                await bot.telegram.deleteMessage(process.env.CHAT_ID, lastCeilingAlertMessageId);
-            } catch (error) {
-                console.error("Error deleting previous alert message:", error);
-            }
-        }
+        // if (lastCeilingAlertMessageId) {
+        //     try {
+        //         await bot.telegram.deleteMessage(process.env.CHAT_ID, lastCeilingAlertMessageId);
+        //     } catch (error) {
+        //         console.error("Error deleting previous alert message:", error);
+        //     }
+        // }
 
         // Send the new alert message and store its ID
+        const chatID = await getValue('chat_id');
         const sentMessage = await bot.telegram.sendMessage(
-            process.env.CHAT_ID,
+            chatID,
             `⚡️📈  <b>Price ceiling hit: ${price}</b> 📈⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
 
-        lastCeilingAlertMessageId = sentMessage.message_id;
+        // lastCeilingAlertMessageId = sentMessage.message_id;
     }
 }
 
@@ -205,7 +206,7 @@ async function checkPriceFloor() {
     const priceFloor = await getValue('priceFloor');
 
     if (priceFloor == null) {
-        debug("priceFloor is not set - skipping check");
+        console.log("priceFloor is not set - skipping check");
         return;
     }
 
@@ -225,22 +226,23 @@ async function checkPriceFloor() {
         ];
 
         // Delete the previous alert message if it exists
-        if (lastFloorAlertMessageId) {
-            try {
-                await bot.telegram.deleteMessage(process.env.CHAT_ID, lastFloorAlertMessageId);
-            } catch (error) {
-                console.error("Error deleting previous alert message:", error);
-            }
-        }
+        // if (lastFloorAlertMessageId) {
+        //     try {
+        //         await bot.telegram.deleteMessage(process.env.CHAT_ID, lastFloorAlertMessageId);
+        //     } catch (error) {
+        //         console.error("Error deleting previous alert message:", error);
+        //     }
+        // }
 
         // Send the new alert message and store its ID
+        const chatID = await getValue('chat_id');
         const sentMessage = await bot.telegram.sendMessage(
-            process.env.CHAT_ID,
+            chatID,
             `⚡️📉  <b>Price floor hit: ${price}</b> 📉⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
 
-        lastFloorAlertMessageId = sentMessage.message_id;
+        // lastFloorAlertMessageId = sentMessage.message_id;
     }
 }
 

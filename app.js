@@ -2,7 +2,7 @@ import express from 'express';
 import path from 'path';
 
 import config from './server/config.js';
-import { DB_COLLECTION_NAME, db, closeMongoDBConnection, connectToMongoDB } from "./server/database.js";
+import { db, closeMongoDBConnection, connectToMongoDB } from "./server/database.js";
 import { initBot, killBot } from './server/bot.js';
 import { runIntterra } from './server/commands/intterra.js';
 
@@ -11,8 +11,8 @@ import { runIntterra } from './server/commands/intterra.js';
 await connectToMongoDB();
 
 
-// let closingInProgress = false;
 
+// let closingInProgress = false;
 //NOTE: TODO: we have to ensure that every possible exception is covered in try{} blocks or else the app will not close...
 async function closeApp() {
     // NOTE: there was once an uncaught exception that prevented the app from closing.  Next time I pressed Control-C this code prevented closeApp() from running...
@@ -26,6 +26,7 @@ async function closeApp() {
     try {
         await killBot();
         await closeMongoDBConnection();
+        await killIntterra();
         console.log("Closed app successfully");
         process.exit(0);
     } catch (error) {
@@ -34,20 +35,6 @@ async function closeApp() {
     }
 }
 
-// async function closeApp() {
-//     console.log("Closing app...");
-//     Promise.resolve()
-//         .then(() => killBot())
-//         .then(() => closeMongoDBConnection())
-//         .then(() => {
-//             console.log("Closed app successfully");
-//             process.exit(0);
-//         })
-//         .catch((error) => {
-//             console.error("Error closing app: ", error);
-//             process.exit(1);
-//         });
-// }
 
 
 process.on("SIGINT", closeApp);
@@ -75,7 +62,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.get("/settings", async (req, res) => {
     // TODO: should I just redo this whole function with getters?
-    const collection = db.collection(DB_COLLECTION_NAME);
+    const collection = db.collection(config.DB_COLLECTION_NAME);
 
     const botToken = await collection.findOne({ name: "telegram_bot_token" });
     const chatId = await collection.findOne({ name: "chat_id" });
@@ -126,7 +113,7 @@ app.post('/settings', async (req, res) => {
 
     // TODO: should I just redo this whole function with setters?
     try {
-        const collection = db.collection(DB_COLLECTION_NAME);
+        const collection = db.collection(config.DB_COLLECTION_NAME);
 
         await collection.updateOne({ name: 'telegram_bot_token' }, {
             $set: { value: botToken, name: 'telegram_bot_token' }
@@ -203,6 +190,7 @@ app.listen(PORT, () => {
 
 initBot();
 
+// TODO: change to check if the feature is enabled in the database
 runIntterra();
 
 // clearPendingMessages().then(() => {

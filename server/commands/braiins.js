@@ -45,13 +45,13 @@ async function braiins_user(ctx) {
 
             const prettyData = JSON.stringify(json, null, 2);
             await ctx.reply(`Braiins user info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
-
-            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
             ctx.reply("Error: " + err);
         });
+
+    braiins_TopLevelMenu(ctx);
 }
 
 
@@ -71,13 +71,13 @@ async function braiins_workers(ctx) {
 
             const prettyData = JSON.stringify(json, null, 2);
             await ctx.reply(`Braiins worker info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
-
-            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
             ctx.reply("Error: " + err);
         });
+
+    braiins_TopLevelMenu(ctx);
 }
 
 export function teachBraiins(bot) {

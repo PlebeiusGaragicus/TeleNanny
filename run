@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$(dirname "$0")"
+
 # node app.js
 # npm run start > debug.log 2>&1
 npm run start

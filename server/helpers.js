@@ -14,7 +14,7 @@ export function setModeCallback(mode) {
 
 
 export const ShowTopLevelCommands = async (ctx) => {
-    const commandFiles = fs.readdirSync(path.join(process.cwd(), './commands')).filter(file => file.endsWith('.js'));
+    const commandFiles = fs.readdirSync(path.join(process.cwd(), './server/commands')).filter(file => file.endsWith('.js'));
     const commands = commandFiles.map(file => file.slice(0, -3));
     const buttons = commands.map(command => Markup.button.callback(`${command}`, `${command}_TopLevelMenu`));
 

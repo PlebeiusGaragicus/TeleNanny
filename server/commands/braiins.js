@@ -14,13 +14,18 @@ async function braiins_TopLevelMenu(ctx) {
         return;
     }
 
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('user stats', 'user_action'),
-        Markup.button.callback('workers', 'workers_action'),
-    ]);
+    // const inlineKeyboard = Markup.inlineKeyboard([
+    //     Markup.button.callback('<-', 'show_commands'),
+    //     Markup.button.callback('user stats', 'user_action'),
+    //     Markup.button.callback('workers', 'workers_action'),
+    // ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [Markup.button.callback('user stats', 'user_action'),
+        Markup.button.callback('workers', 'workers_action')]
+    ];
 
-    await ctx.reply('Query the Braiins API:', inlineKeyboard);
+    await ctx.reply('<b>🧠 Braiins Pool:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
@@ -40,13 +45,13 @@ async function braiins_user(ctx) {
 
             const prettyData = JSON.stringify(json, null, 2);
             await ctx.reply(`Braiins user info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
-
-            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
             ctx.reply("Error: " + err);
         });
+
+    braiins_TopLevelMenu(ctx);
 }
 
 
@@ -66,13 +71,13 @@ async function braiins_workers(ctx) {
 
             const prettyData = JSON.stringify(json, null, 2);
             await ctx.reply(`Braiins worker info:\n<pre>${prettyData}</pre>`, { parse_mode: 'HTML' });
-
-            braiins_TopLevelMenu(ctx);
         })
         .catch(err => {
             console.log(err);
             ctx.reply("Error: " + err);
         });
+
+    braiins_TopLevelMenu(ctx);
 }
 
 export function teachBraiins(bot) {

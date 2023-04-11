@@ -1,36 +1,27 @@
 import fetch from 'node-fetch';
 import { Markup } from 'telegraf';
 
-import dotenv from 'dotenv';
-
-import { bot } from '../app.js';
+import { bot } from '../bot.js';
 import { setModeCallback } from '../helpers.js';
+import { setValue, getValue } from '../database.js';
 
-dotenv.config();
 
-let PRICE_CHECK_INTERVAL;
-if (process.env.DEBUG == 1){
-    PRICE_CHECK_INTERVAL = 1000 * 5; // 5 seconds
-} else {
-    PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
-}
-
-let priceCeiling = null;
-let priceCeilingIntervalID = null;
-
-let priceFloor = null;
-let priceFloorIntervalID = null;
+const PRICE_CHECK_INTERVAL = 1000 * 60 * 5; // 5 minutes
+// const PRICE_CHECK_INTERVAL = 1000 * 30; // 5 seconds
+console.log("PRICE_CHECK_INTERVAL: ", PRICE_CHECK_INTERVAL)
 
 
 
 export async function bitcoin_TopLevelMenu(ctx) {
-    const inlineKeyboard = Markup.inlineKeyboard([
-        Markup.button.callback('<-', 'show_commands'),
-        Markup.button.callback('price', 'price'),
-        Markup.button.callback('block height', 'block_height')
-    ]);
+    const inlineKeyboard = [
+        [Markup.button.callback('<-', 'show_commands')],
+        [
+            Markup.button.callback('price', 'price'),
+            Markup.button.callback('block height', 'block_height')
+        ]
+    ];
 
-    await ctx.reply('Bitcoin network:', inlineKeyboard);
+    await ctx.reply('<b>Bitcoin network:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
@@ -65,32 +56,31 @@ async function price(ctx) {
         return;
     }
 
+    // POST THE PRICE/ALERT STATUS IN THE CHAT
+    const calert = await getValue('priceCeiling');
+    const falert = await getValue('priceFloor');
+    await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
+
+    // SHOW A SUBMENU
     const inlineKeyboard = [
+        [Markup.button.callback('<-', 'bitcoin_TopLevelMenu')],
         [
-            Markup.button.callback('<-', 'bitcoin_TopLevelMenu'),
             Markup.button.callback('price ceiling', 'setCeiling'),
             Markup.button.callback('price floor', 'setFloor')
         ]
     ];
-
-    const calert = priceCeiling == null ? "none" : Intl.NumberFormat('en-US').format(priceCeiling);
-    const falert = priceFloor == null ? "none" : Intl.NumberFormat('en-US').format(priceFloor);
-
-    await ctx.reply(`<b>Coinbase spot price:</b>\n<pre>$${price}</pre>\nCeiling alert: ${calert}\nFloor alert: ${falert}`, { parse_mode: 'HTML' });
-    await ctx.reply('Bitcoin price and alerts:', { reply_markup: { inline_keyboard: inlineKeyboard } });
+    await ctx.reply('💰 <b>Bitcoin price and alerts:</b>', { parse_mode: 'HTML', reply_markup: { inline_keyboard: inlineKeyboard } });
 }
 
 
 
 async function setCeiling(ctx) {
-    console.log("Set Ceiling button pressed")
     await ctx.reply('Enter price ceiling: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustCeiling);
 }
 
 
 async function setFloor(ctx) {
-    console.log("Set Floor button pressed")
     await ctx.reply('Enter price floor: (0 to cancel)', { reply_markup: { inline_keyboard: [] } });
     setModeCallback(adjustFloor);
 }
@@ -105,8 +95,7 @@ async function adjustCeiling(ctx) {
     if (ceiling == 0) {
         console.log("Price ceiling cancelled");
         ctx.reply("Price ceiling cancelled");
-        priceCeiling = null;
-        clearInterval(priceCeilingIntervalID);
+        await setValue("priceCeiling", null);
 
         price(ctx);
         return;
@@ -123,9 +112,7 @@ async function adjustCeiling(ctx) {
     ctx.reply("Price ceiling set to: " + ceiling);
 
     setModeCallback(null);
-
-    priceCeiling = ceiling;
-    priceCeilingIntervalID = setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
+    await setValue("priceCeiling", ceiling);
 
     price(ctx);
 }
@@ -140,8 +127,7 @@ async function adjustFloor(ctx) {
     if (floor == 0) {
         console.log("Price floor cancelled");
         ctx.reply("Price floor cancelled");
-        priceFloor = null;
-        clearInterval(priceFloorIntervalID);
+        await setValue("priceFloor", null);
 
         price(ctx);
         return;
@@ -158,11 +144,8 @@ async function adjustFloor(ctx) {
     ctx.reply("Price floor set to: " + floor);
 
     setModeCallback(null);
+    await setValue("priceFloor", floor);
 
-    priceFloor = floor;
-    priceFloorIntervalID = setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
-
-    bitcoin_TopLevelMenu(ctx);
     price(ctx);
 }
 
@@ -171,6 +154,13 @@ async function adjustFloor(ctx) {
 let lastCeilingAlertMessageId = null;
 
 async function checkPriceCeiling() {
+    const priceCeiling = await getValue('priceCeiling');
+
+    if (priceCeiling == null) {
+        console.log("priceCeiling is not set - skipping check");
+        return;
+    }
+
     const price = await getPrice();
 
     if (price == null) {
@@ -187,22 +177,23 @@ async function checkPriceCeiling() {
         ];
 
         // Delete the previous alert message if it exists
-        if (lastCeilingAlertMessageId) {
-            try {
-                await bot.telegram.deleteMessage(process.env.CHAT_ID, lastCeilingAlertMessageId);
-            } catch (error) {
-                console.error("Error deleting previous alert message:", error);
-            }
-        }
+        // if (lastCeilingAlertMessageId) {
+        //     try {
+        //         await bot.telegram.deleteMessage(process.env.CHAT_ID, lastCeilingAlertMessageId);
+        //     } catch (error) {
+        //         console.error("Error deleting previous alert message:", error);
+        //     }
+        // }
 
         // Send the new alert message and store its ID
+        const chatID = await getValue('chat_id');
         const sentMessage = await bot.telegram.sendMessage(
-            process.env.CHAT_ID,
+            chatID,
             `⚡️📈  <b>Price ceiling hit: ${price}</b> 📈⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
 
-        lastCeilingAlertMessageId = sentMessage.message_id;
+        // lastCeilingAlertMessageId = sentMessage.message_id;
     }
 }
 
@@ -212,6 +203,13 @@ async function checkPriceCeiling() {
 let lastFloorAlertMessageId = null;
 
 async function checkPriceFloor() {
+    const priceFloor = await getValue('priceFloor');
+
+    if (priceFloor == null) {
+        console.log("priceFloor is not set - skipping check");
+        return;
+    }
+
     const price = await getPrice();
 
     if (price == null) {
@@ -228,22 +226,23 @@ async function checkPriceFloor() {
         ];
 
         // Delete the previous alert message if it exists
-        if (lastFloorAlertMessageId) {
-            try {
-                await bot.telegram.deleteMessage(process.env.CHAT_ID, lastFloorAlertMessageId);
-            } catch (error) {
-                console.error("Error deleting previous alert message:", error);
-            }
-        }
+        // if (lastFloorAlertMessageId) {
+        //     try {
+        //         await bot.telegram.deleteMessage(process.env.CHAT_ID, lastFloorAlertMessageId);
+        //     } catch (error) {
+        //         console.error("Error deleting previous alert message:", error);
+        //     }
+        // }
 
         // Send the new alert message and store its ID
+        const chatID = await getValue('chat_id');
         const sentMessage = await bot.telegram.sendMessage(
-            process.env.CHAT_ID,
+            chatID,
             `⚡️📉  <b>Price floor hit: ${price}</b> 📉⚡️`,
             { parse_mode: 'HTML', reply_markup: { inline_keyboard: acknowledgeKeyboard } }
         );
 
-        lastFloorAlertMessageId = sentMessage.message_id;
+        // lastFloorAlertMessageId = sentMessage.message_id;
     }
 }
 
@@ -252,15 +251,15 @@ async function checkPriceFloor() {
 async function acknowledgeCeilingAlert(ctx) {
     // TODO: where do I need to answer the cb query...? I'm confused.
     // await ctx.answerCbQuery(); // Answer the callback query
-    priceCeiling = null;
-    clearInterval(priceCeilingIntervalID);
+
+    await setValue("priceCeiling", null);
     await ctx.reply('Price ceiling alerts stopped.');
 }
 
 
 async function acknowledgeFloorAlert(ctx) {
-    priceFloor = null;
-    clearInterval(priceFloorIntervalID);
+    // await setPriceFloor(null);
+    await setValue("priceFloor", null);
     await ctx.reply('Price floor alerts stopped.');
 }
 
@@ -318,6 +317,7 @@ export function teachBitcoin(bot) {
     // SUBJECT
     bot.action('block_height', block_height);
 
-    // SKILLS
-    // ...
+    // ALERTS
+    setInterval(checkPriceCeiling, PRICE_CHECK_INTERVAL);
+    setInterval(checkPriceFloor, PRICE_CHECK_INTERVAL);
 }

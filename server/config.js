@@ -10,5 +10,5 @@ export default {
     // MongoDB
     DB_DATABASE_NAME: 'teleNanny',
     DB_COLLECTION_NAME: 'settings',
-    DB_URI: "mongodb://localhost:27017/",
+    DB_URI: "mongodb://127.0.0.1:27017/teleNanny",
 }

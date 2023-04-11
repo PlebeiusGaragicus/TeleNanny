@@ -8,7 +8,7 @@ import { teachBraiins } from './commands/braiins.js';
 import { teachMiner } from './commands/miner.js';
 import { teachChatGPT } from './commands/chatGPT.js';
 
-// export const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+
 export let bot = null;
 
 // TODO: unsure of this.  I don't want multiple menus up and running.  So, I don't want the user to do /start again and again.

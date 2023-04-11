@@ -10,6 +10,8 @@ import { getValue, setValue } from '../database.js';
 import { bot } from '../bot.js';
 // import { access } from 'fs';
 
+import config from '../config.js';
+
 let browser = null;
 let currentCallID = null;
 
@@ -63,7 +65,8 @@ export async function runIntterra() {
 
     console.log("Interra is watching unit: ", unit);
 
-    browser = await puppeteer.launch({ headless: false });
+    // browser = await puppeteer.launch({ headless: config.debug ? false : true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ headless: config.debug });
     const page = await browser.newPage();
 
     const client = await page.target().createCDPSession();

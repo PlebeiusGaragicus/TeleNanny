@@ -4,7 +4,7 @@ import path from 'path';
 import config from './server/config.js';
 import { db, closeMongoDBConnection, connectToMongoDB } from "./server/database.js";
 import { initBot, killBot } from './server/bot.js';
-import { runIntterra } from './server/commands/intterra.js';
+import { killIntterra, runIntterra } from './server/commands/intterra.js';
 
 
 // SETUP THE DATABASE

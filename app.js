@@ -4,7 +4,6 @@ import path from 'path';
 import config from './server/config.js';
 import { db, closeMongoDBConnection, connectToMongoDB } from "./server/database.js";
 import { initBot, killBot } from './server/bot.js';
-import { killIntterra, runIntterra } from './server/commands/intterra.js';
 
 
 // SETUP THE DATABASE
@@ -68,21 +67,12 @@ app.get("/settings", async (req, res) => {
     const chatId = await collection.findOne({ name: "chat_id" });
     const braiinsToken = await collection.findOne({ name: "braiins_token" });
     const openaiToken = await collection.findOne({ name: "openai_token" });
-    // INTTERRA
-    const intterraUnit = await collection.findOne({ name: "intterra_unit" });
-    const intterraUnitPhonetic = await collection.findOne({ name: "intterra_unit_phonetic" });
-    const intterraUsername = await collection.findOne({ name: "intterra_username" });
-    const intterraPassword = await collection.findOne({ name: "intterra_password" });
 
     res.json({
         botToken: botToken ? botToken.value : "",
         chatId: chatId ? chatId.value : "",
         braiinsToken: braiinsToken ? braiinsToken.value : "",
         openAIToken: openaiToken ? openaiToken.value : "",
-        intterraUnit: intterraUnit ? intterraUnit.value : "",
-        intterraUnitPhonetic: intterraUnitPhonetic ? intterraUnitPhonetic.value : "",
-        intterraUsername: intterraUsername ? intterraUsername.value : "",
-        intterraPassword: intterraPassword ? intterraPassword.value : "",
     });
 });
 
@@ -109,7 +99,7 @@ app.get("/settings", async (req, res) => {
 // });
 
 app.post('/settings', async (req, res) => {
-    const { botToken, chatId, braiinsToken, openAIToken, intterraUnit, intterraUnitPhonetic, intterraUsername, intterraPassword } = req.body;
+    const { botToken, chatId, braiinsToken, openAIToken } = req.body;
 
     // TODO: should I just redo this whole function with setters?
     try {
@@ -129,23 +119,6 @@ app.post('/settings', async (req, res) => {
 
         await collection.updateOne({ name: 'openai_token' }, {
             $set: { value: openAIToken, name: 'openai_token' }
-        }, { upsert: true });
-
-        // INTTERRA
-        await collection.updateOne({ name: 'intterra_unit' }, {
-            $set: { value: intterraUnit, name: 'intterra_unit' }
-        }, { upsert: true });
-
-        await collection.updateOne({ name: 'intterra_unit_phonetic' }, {
-            $set: { value: intterraUnitPhonetic, name: 'intterra_unit_phonetic' }
-        }, { upsert: true });
-
-        await collection.updateOne({ name: 'intterra_username' }, {
-            $set: { value: intterraUsername, name: 'intterra_username' }
-        }, { upsert: true });
-
-        await collection.updateOne({ name: 'intterra_password' }, {
-            $set: { value: intterraPassword, name: 'intterra_password' }
         }, { upsert: true });
 
         res.status(200).send('Settings updated successfully.');
@@ -189,9 +162,6 @@ app.listen(PORT, () => {
 
 
 initBot();
-
-// TODO: change to check if the feature is enabled in the database
-runIntterra();
 
 // clearPendingMessages().then(() => {
 //     bot.launch();
